@@ -14,6 +14,12 @@
  *   SOURCE_DATABASE_URL="postgresql://..." npm run copy:users -- --replace
  */
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+const sharedEnv = path.join(__dirname, '..', '..', 'un-shared-auth-db', '.env');
+if (!process.env.AUTH_DATABASE_URL && fs.existsSync(sharedEnv)) {
+  require('dotenv').config({ path: sharedEnv });
+}
 const { getAuthDatabaseUrl, getDatabaseUrl } = require('../config/database-url');
 const { Pool } = require('pg');
 
@@ -39,6 +45,11 @@ async function main() {
     process.exit(1);
   }
 
+  require('../models');
+  const authSequelize = require('../config/auth-database');
+  await authSequelize.sync({ alter: true });
+  console.log('Auth database schema ready.');
+
   const src = pool(sourceUrl);
   const dst = pool(targetUrl);
 
@@ -55,8 +66,16 @@ async function main() {
     await clientDst.query('BEGIN');
 
     if (replace) {
-      await clientDst.query('TRUNCATE TABLE password_reset_tokens, users CASCADE');
-      console.log('Target: truncated users and password_reset_tokens (--replace).');
+      const { rows: chk } = await clientDst.query(`
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'users'
+        ) AS e;
+      `);
+      if (chk[0].e) {
+        await clientDst.query('TRUNCATE TABLE users CASCADE');
+        console.log('Target: truncated users (and tokens) (--replace).');
+      }
     }
 
     const first = rows[0];
