@@ -1,0 +1,62 @@
+<% var b = block; var i = index; var _btl = { hero_image: 'Hero: Image', hero_video: 'Hero: Video', full_image: 'Full-Screen Image', full_image_overlay_left: 'Image + Overlay (Left)', full_image_overlay_center: 'Image + Overlay (Center)', full_image_overlay_right: 'Image + Overlay (Right)', full_image_subtitle: 'Image + Statement Subtitle', split_image_left: 'Split: Image Left, Text Right', split_image_right: 'Split: Image Right, Text Left', text_block: 'Text Block (Heading + Body)', text_body: 'Text Block (Body Only)', quote_dark: 'Quote (Dark / Blue)', quote_light: 'Quote (Light / White)', divider: 'Divider' }; %>
+<div class="block-card drag-item <%= b.id ? '' : 'expanded' %>" data-id="<%= b.id || '' %>" draggable="true">
+  <div class="block-card-header">
+    <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+    <span class="block-type-badge"><%= _btl[b.blockType] || b.blockType %></span>
+    <span class="block-summary"><%= (b.heading || b.bodyText || b.quoteText || b.imageUrl || '').toString().substring(0, 50) %></span>
+    <div class="block-actions">
+      <button type="button" class="btn-move-up">Up</button>
+      <button type="button" class="btn-move-down">Down</button>
+      <button type="button" class="btn-remove">Remove</button>
+    </div>
+  </div>
+  <div class="block-card-body">
+    <input type="hidden" name="blocks[<%= i %>][blockType]" value="<%= b.blockType %>">
+    <input type="hidden" name="blocks[<%= i %>][sortOrder]" class="sort-order-input" value="<%= i %>">
+    <% if (b.id) { %><input type="hidden" name="blocks[<%= i %>][id]" value="<%= b.id %>"><% } %>
+    <% if (b.blockType === 'hero_image') { %>
+      <p><label>Title<br><input type="text" name="blocks[<%= i %>][heading]" value="<%= b.heading || '' %>" class="wide"></label></p>
+      <p><label>Subtitle<br><input type="text" name="blocks[<%= i %>][subheading]" value="<%= b.subheading || '' %>" class="wide"></label></p>
+      <p><label>Image URL<br><input type="text" name="blocks[<%= i %>][imageUrl]" value="<%= b.imageUrl || '' %>" class="wide img-url"></label></p>
+      <p><label>Image Alt Text<br><input type="text" name="blocks[<%= i %>][imageAlt]" value="<%= b.imageAlt || '' %>" class="wide"></label></p>
+      <p><label>Photo Credit<br><input type="text" name="blocks[<%= i %>][imageCaption]" value="<%= b.imageCaption || '' %>" class="wide"></label></p>
+    <% } else if (b.blockType === 'hero_video') { %>
+      <p><label>Title<br><input type="text" name="blocks[<%= i %>][heading]" value="<%= (b.heading || '') %>" class="wide"></label></p>
+      <p><label>Subtitle<br><input type="text" name="blocks[<%= i %>][subheading]" value="<%= (b.subheading || '') %>" class="wide"></label></p>
+      <p><label>Video URL (MP4)<br><input type="text" name="blocks[<%= i %>][videoUrl]" value="<%= (b.videoUrl || '') %>" class="wide"></label></p>
+      <p><label>Video Credit<br><input type="text" name="blocks[<%= i %>][imageCaption]" value="<%= (b.imageCaption || '') %>" class="wide"></label></p>
+    <% } else if (b.blockType === 'full_image') { %>
+      <p><label>Image URL<br><input type="text" name="blocks[<%= i %>][imageUrl]" value="<%= (b.imageUrl || '') %>" class="wide img-url"></label></p>
+      <p><label>Image Alt Text<br><input type="text" name="blocks[<%= i %>][imageAlt]" value="<%= (b.imageAlt || '') %>" class="wide"></label></p>
+      <p><label>Photo Credit<br><input type="text" name="blocks[<%= i %>][imageCaption]" value="<%= (b.imageCaption || '') %>" class="wide"></label></p>
+    <% } else if (b.blockType === 'full_image_overlay_left' || b.blockType === 'full_image_overlay_center' || b.blockType === 'full_image_overlay_right') { %>
+      <p><label>Overlay Heading<br><input type="text" name="blocks[<%= i %>][heading]" value="<%= (b.heading || '') %>" class="wide"></label></p>
+      <p><label>Overlay Text<br><textarea name="blocks[<%= i %>][bodyText]" rows="4" class="wide"><%= b.bodyText || '' %></textarea></label></p>
+      <p><label>Image URL<br><input type="text" name="blocks[<%= i %>][imageUrl]" value="<%= (b.imageUrl || '') %>" class="wide img-url"></label></p>
+      <p><label>Image Alt Text<br><input type="text" name="blocks[<%= i %>][imageAlt]" value="<%= (b.imageAlt || '') %>" class="wide"></label></p>
+      <p><label>Photo Credit<br><input type="text" name="blocks[<%= i %>][imageCaption]" value="<%= (b.imageCaption || '') %>" class="wide"></label></p>
+    <% } else if (b.blockType === 'full_image_subtitle') { %>
+      <p><label>Statement Text<br><input type="text" name="blocks[<%= i %>][subheading]" value="<%= (b.subheading || '') %>" class="wide"></label></p>
+      <p><label>Image URL<br><input type="text" name="blocks[<%= i %>][imageUrl]" value="<%= (b.imageUrl || '') %>" class="wide img-url"></label></p>
+      <p><label>Image Alt Text<br><input type="text" name="blocks[<%= i %>][imageAlt]" value="<%= (b.imageAlt || '') %>" class="wide"></label></p>
+      <p><label>Photo Credit<br><input type="text" name="blocks[<%= i %>][imageCaption]" value="<%= (b.imageCaption || '') %>" class="wide"></label></p>
+    <% } else if (b.blockType === 'split_image_left' || b.blockType === 'split_image_right') { %>
+      <p><label>Heading<br><input type="text" name="blocks[<%= i %>][heading]" value="<%= (b.heading || '') %>" class="wide"></label></p>
+      <p><label>Body Text<br><textarea name="blocks[<%= i %>][bodyText]" rows="5" class="wide"><%= b.bodyText || '' %></textarea></label></p>
+      <p><label>Image URL<br><input type="text" name="blocks[<%= i %>][imageUrl]" value="<%= (b.imageUrl || '') %>" class="wide img-url"></label></p>
+      <p><label>Image Alt Text<br><input type="text" name="blocks[<%= i %>][imageAlt]" value="<%= (b.imageAlt || '') %>" class="wide"></label></p>
+      <p><label>Photo Credit<br><input type="text" name="blocks[<%= i %>][imageCaption]" value="<%= (b.imageCaption || '') %>" class="wide"></label></p>
+    <% } else if (b.blockType === 'text_block') { %>
+      <p><label>Heading<br><input type="text" name="blocks[<%= i %>][heading]" value="<%= (b.heading || '') %>" class="wide"></label></p>
+      <p><label>Body Text<br><textarea name="blocks[<%= i %>][bodyText]" rows="6" class="wide"><%= b.bodyText || '' %></textarea></label></p>
+    <% } else if (b.blockType === 'text_body') { %>
+      <p><label>Body Text<br><textarea name="blocks[<%= i %>][bodyText]" rows="8" class="wide"><%= b.bodyText || '' %></textarea></label></p>
+    <% } else if (b.blockType === 'quote_dark' || b.blockType === 'quote_light') { %>
+      <p><label>Quote Text<br><textarea name="blocks[<%= i %>][quoteText]" rows="4" class="wide"><%= b.quoteText || '' %></textarea></label></p>
+      <p><label>Speaker Name<br><input type="text" name="blocks[<%= i %>][quoteSpeaker]" value="<%= (b.quoteSpeaker || '') %>" class="wide"></label></p>
+      <p><label>Speaker Title &amp; Organization<br><input type="text" name="blocks[<%= i %>][quoteSpeakerTitle]" value="<%= (b.quoteSpeakerTitle || '') %>" class="wide"></label></p>
+    <% } else if (b.blockType === 'divider') { %>
+      <p><label>Divider Label<br><input type="text" name="blocks[<%= i %>][heading]" value="<%= (b.heading || '') %>" class="wide"></label></p>
+    <% } %>
+  </div>
+</div>

@@ -1,0 +1,37 @@
+<%- include('../partials/admin-head') %>
+
+<h2>Dashboard</h2>
+
+<div class="stat-grid">
+    <div class="stat-card">
+        <span class="stat-num"><%= storyCount %></span>
+        <span class="stat-label">Feature Stories</span>
+        <a href="/admin/stories">Manage stories →</a>
+    </div>
+    <div class="stat-card">
+        <span class="stat-num"><%= timelineCount %></span>
+        <span class="stat-label">Timelines</span>
+        <a href="/admin/timelines">Manage timelines →</a>
+    </div>
+    <div class="stat-card">
+        <span class="stat-num"><%= userCount %></span>
+        <span class="stat-label">Users</span>
+        <% if (user && user.role === 'admin') { %>
+        <a href="/admin/users">Manage users →</a>
+        <% } %>
+    </div>
+    <% if (recentStory) { %>
+    <div class="stat-card">
+        <span class="stat-label">Last updated story</span>
+        <a href="/admin/stories/<%= recentStory.id %>/edit"><%= recentStory.title %></a>
+    </div>
+    <% } %>
+    <% if (recentTimeline) { %>
+    <div class="stat-card">
+        <span class="stat-label">Last updated timeline</span>
+        <a href="/admin/timelines/<%= recentTimeline.id %>/edit"><%= recentTimeline.title %></a>
+    </div>
+    <% } %>
+</div>
+
+<%- include('../partials/admin-footer') %>

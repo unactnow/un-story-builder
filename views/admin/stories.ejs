@@ -1,0 +1,41 @@
+<%- include('../partials/admin-head') %>
+
+<h2>Feature stories</h2>
+<p>Total: <%= stories.length %> stor<%= stories.length !== 1 ? 'ies' : 'y' %></p>
+<p><a href="/admin/stories/new" class="btn">Create New Story</a></p>
+
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Status</th>
+      <th>Blocks</th>
+      <th>Last Updated</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% stories.forEach(function(s) { %>
+    <tr>
+      <td><a href="/admin/stories/<%= s.id %>/edit"><%= s.title %></a></td>
+      <td><span class="badge <%= s.status === 'published' ? 'badge-published' : 'badge-draft' %>"><%= s.status %></span></td>
+      <td><%= typeof s.blocksCount !== 'undefined' ? s.blocksCount : '—' %></td>
+      <td><%= s.updatedAt ? new Date(s.updatedAt).toLocaleString() : '—' %></td>
+      <td>
+        <a href="/admin/stories/<%= s.id %>/edit">Edit</a>
+        · <a href="/admin/stories/<%= s.id %>/export">Export</a>
+        · <form method="post" action="/admin/stories/<%= s.id %>/delete" style="display:inline;" onsubmit="return confirm('Delete this story permanently?');">
+          <input type="hidden" name="_csrf_token" value="<%= csrfToken %>">
+          <button type="submit" class="link-btn">Delete</button>
+        </form>
+      </td>
+    </tr>
+    <% }); %>
+  </tbody>
+</table>
+
+<% if (stories.length === 0) { %>
+<p>No stories yet.</p>
+<% } %>
+
+<%- include('../partials/admin-footer') %>

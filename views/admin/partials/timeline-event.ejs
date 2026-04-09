@@ -1,0 +1,24 @@
+<% var e = event; var i = index; %>
+<div class="event-card drag-item <%= e.id ? '' : 'expanded' %>" data-id="<%= e.id || '' %>" draggable="true">
+  <div class="event-card-header">
+    <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+    <span class="event-date-badge"><%= (e.dateText || '—').toString().substring(0, 24) %></span>
+    <span class="event-summary"><%= (e.heading || 'New event').toString().substring(0, 80) %></span>
+    <div class="block-actions">
+      <button type="button" class="btn-move-up">Up</button>
+      <button type="button" class="btn-move-down">Down</button>
+      <button type="button" class="btn-remove">Remove</button>
+    </div>
+  </div>
+  <div class="event-card-body">
+    <input type="hidden" name="events[<%= i %>][sortOrder]" class="sort-order-input" value="<%= i %>">
+    <% if (e.id) { %><input type="hidden" name="events[<%= i %>][id]" value="<%= e.id %>"><% } %>
+    <p><label>Display Date<br><input type="text" name="events[<%= i %>][dateText]" value="<%= e.dateText || '' %>" class="wide" placeholder="e.g. 1960"></label></p>
+    <p><label>ISO Date (for sorting)<br><input type="text" name="events[<%= i %>][dateISO]" value="<%= e.dateISO || '' %>" class="wide" placeholder="e.g. 1960-02-01"></label></p>
+    <p><label>Location<br><input type="text" name="events[<%= i %>][location]" value="<%= e.location || '' %>" class="wide"></label></p>
+    <p><label>Event Title *<br><input type="text" name="events[<%= i %>][heading]" value="<%= e.heading || '' %>" class="wide"></label></p>
+    <p><label>Event Description<br><textarea name="events[<%= i %>][description]" rows="5" class="wide"><%= e.description || '' %></textarea></label></p>
+    <p><label>Image URL (optional)<br><input type="text" name="events[<%= i %>][imageUrl]" value="<%= e.imageUrl || '' %>" class="wide img-url"></label></p>
+    <p><label>Image Alt Text<br><input type="text" name="events[<%= i %>][imageAlt]" value="<%= e.imageAlt || '' %>" class="wide"></label></p>
+  </div>
+</div>

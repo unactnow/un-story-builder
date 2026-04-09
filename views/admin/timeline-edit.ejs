@@ -1,0 +1,195 @@
+<%- include('../partials/admin-head') %>
+
+<h2><%= timeline ? 'Edit timeline' : 'New timeline' %><% if (timeline && revisionCount > 0) { %> <span class="title-meta">(<a href="/admin/timelines/<%= timeline.id %>/revisions"><%= revisionCount %> revision<%= revisionCount !== 1 ? 's' : '' %></a>)</span><% } %></h2>
+
+<form method="post" action="<%= timeline ? '/admin/timelines/' + timeline.id + '/edit' : '/admin/timelines/new' %>" id="timeline-form">
+  <input type="hidden" name="_csrf_token" value="<%= csrfToken %>">
+
+  <div class="form-row">
+    <label for="title">Title *</label>
+    <input type="text" id="title" name="title" required value="<%= timeline ? timeline.title : '' %>" class="wide">
+  </div>
+  <div class="form-row">
+    <label for="slug">Slug</label>
+    <input type="text" id="slug" name="slug" value="<%= timeline ? timeline.slug : '' %>" class="wide">
+    <span class="hint">Auto-generated from the title. Edit only if needed.</span>
+  </div>
+  <div class="form-row">
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="3" class="wide"><%= timeline ? (timeline.description || '') : '' %></textarea>
+    <span class="hint">Subtitle shown in the timeline header when exported.</span>
+  </div>
+  <div class="form-row">
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      <% var st = timeline ? timeline.status : 'draft'; %>
+      <option value="draft" <%= st === 'draft' ? 'selected' : '' %>>draft</option>
+      <option value="published" <%= st === 'published' ? 'selected' : '' %>>published</option>
+    </select>
+  </div>
+
+  <div class="btn-row">
+    <button type="submit" class="btn">Save</button>
+    <% if (timeline) { %>
+    <a href="/admin/timelines/<%= timeline.id %>/export" class="btn btn-outline">Export</a>
+    <button type="button" class="btn btn-outline" style="color:var(--color-error);border-color:var(--color-error);" id="btn-delete-timeline">Delete</button>
+    <% } %>
+  </div>
+
+  <h3>Events</h3>
+  <div id="event-list" class="block-list" data-drag-container data-reorder-url="<%= timeline ? '/admin/timelines/' + timeline.id + '/events/reorder' : '' %>" data-reorder-id-key="eventIds">
+    <% events.forEach(function(ev, i) { %>
+    <%- include('./partials/timeline-event', { event: ev, index: i }) %>
+    <% }); %>
+  </div>
+
+  <p><button type="button" class="btn btn-outline" id="btn-add-event">Add Event</button></p>
+
+  <p class="hint">Image URLs show a thumbnail below each field when valid.</p>
+</form>
+
+<% if (timeline) { %>
+<form method="post" action="/admin/timelines/<%= timeline.id %>/delete" id="delete-timeline-form" style="display:none;">
+  <input type="hidden" name="_csrf_token" value="<%= csrfToken %>">
+</form>
+<% } %>
+
+<template id="tpl-timeline-event">
+<%- include('./partials/timeline-event-tpl', { event: { dateText: '', dateISO: '', location: '', heading: '', description: '', imageUrl: '', imageAlt: '' } }) %>
+</template>
+
+<script src="/js/drag-reorder.js"></script>
+<script>
+(function () {
+  var slugManuallyEdited = false;
+  var titleEl = document.getElementById('title');
+  var slugEl = document.getElementById('slug');
+  if (titleEl && slugEl) {
+    titleEl.addEventListener('input', function () {
+      if (slugManuallyEdited) return;
+      slugEl.value = titleEl.value
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+    });
+    slugEl.addEventListener('input', function () { slugManuallyEdited = true; });
+  }
+
+  function reindexTimelineEvents() {
+    var list = document.getElementById('event-list');
+    if (!list) return;
+    var cards = list.querySelectorAll('.event-card');
+    cards.forEach(function (card, i) {
+      card.querySelectorAll('[name^="events["]').forEach(function (el) {
+        el.name = el.name.replace(/^events\[[^\]]+\]/, 'events[' + i + ']');
+      });
+      var so = card.querySelector('.sort-order-input');
+      if (so) so.value = i;
+    });
+  }
+
+  var eventListEl = document.getElementById('event-list');
+  if (eventListEl) eventListEl.addEventListener('dragreorder', reindexTimelineEvents);
+
+  function postEventsReorder() {
+    var list = document.getElementById('event-list');
+    var url = list.getAttribute('data-reorder-url');
+    if (!url) return;
+    var key = list.getAttribute('data-reorder-id-key') || 'eventIds';
+    var ids = [];
+    var items = list.querySelectorAll('.drag-item');
+    for (var j = 0; j < items.length; j += 1) {
+      var id = items[j].getAttribute('data-id');
+      if (!id || id.trim() === '') return;
+      ids.push(id);
+    }
+    if (ids.length !== items.length) return;
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    var body = {}; body[key] = ids;
+    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': meta ? meta.getAttribute('content') : '' }, body: JSON.stringify(body) }).catch(function () {});
+  }
+
+  function wireEventCard(card) {
+    var header = card.querySelector('.event-card-header');
+    if (header) {
+      header.addEventListener('click', function (e) {
+        if (e.target.closest('.block-actions') || e.target.closest('.drag-handle')) return;
+        card.classList.toggle('expanded');
+      });
+    }
+    card.querySelector('.btn-remove').addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (!confirm('Remove this event?')) return;
+      card.remove();
+      reindexTimelineEvents();
+    });
+    card.querySelector('.btn-move-up').addEventListener('click', function (e) {
+      e.stopPropagation();
+      var prev = card.previousElementSibling;
+      if (prev && prev.classList.contains('event-card')) {
+        card.parentNode.insertBefore(card, prev);
+        reindexTimelineEvents();
+        if (eventListEl) eventListEl.dispatchEvent(new CustomEvent('dragreorder', { bubbles: true }));
+        postEventsReorder();
+      }
+    });
+    card.querySelector('.btn-move-down').addEventListener('click', function (e) {
+      e.stopPropagation();
+      var next = card.nextElementSibling;
+      if (next && next.classList.contains('event-card')) {
+        card.parentNode.insertBefore(card, next.nextSibling);
+        reindexTimelineEvents();
+        if (eventListEl) eventListEl.dispatchEvent(new CustomEvent('dragreorder', { bubbles: true }));
+        postEventsReorder();
+      }
+    });
+    card.querySelectorAll('.img-url').forEach(function (inp) {
+      inp.addEventListener('input', function () { updateImagePreview(inp); });
+      updateImagePreview(inp);
+    });
+  }
+
+  function updateImagePreview(inp) {
+    var v = (inp.value || '').trim();
+    var wrap = inp.parentNode.parentNode;
+    var prev = wrap.querySelector('.image-preview');
+    if (prev) prev.remove();
+    if (!/^https?:\/\//i.test(v)) return;
+    var div = document.createElement('div');
+    div.className = 'image-preview';
+    var img = document.createElement('img');
+    img.alt = '';
+    img.src = v;
+    img.onerror = function () { div.style.display = 'none'; };
+    div.appendChild(img);
+    wrap.appendChild(div);
+  }
+
+  document.querySelectorAll('#event-list .event-card').forEach(wireEventCard);
+
+  document.getElementById('btn-add-event').addEventListener('click', function () {
+    var tpl = document.getElementById('tpl-timeline-event');
+    if (!tpl) return;
+    var list = document.getElementById('event-list');
+    var n = list.querySelectorAll('.event-card').length;
+    var html = tpl.innerHTML.replace(/__INDEX__/g, String(n));
+    var wrap = document.createElement('div');
+    wrap.innerHTML = html.trim();
+    var card = wrap.firstElementChild;
+    list.appendChild(card);
+    wireEventCard(card);
+    reindexTimelineEvents();
+  });
+
+  <% if (timeline) { %>
+  document.getElementById('btn-delete-timeline').addEventListener('click', function () {
+    if (confirm('Delete this timeline permanently?')) document.getElementById('delete-timeline-form').submit();
+  });
+  <% } %>
+})();
+</script>
+
+<%- include('../partials/admin-footer') %>

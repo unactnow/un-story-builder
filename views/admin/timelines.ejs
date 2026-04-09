@@ -1,0 +1,41 @@
+<%- include('../partials/admin-head') %>
+
+<h2>Timelines</h2>
+<p>Total: <%= timelines.length %> timeline<%= timelines.length !== 1 ? 's' : '' %></p>
+<p><a href="/admin/timelines/new" class="btn">Create New Timeline</a></p>
+
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Status</th>
+      <th>Events</th>
+      <th>Last Updated</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% timelines.forEach(function(t) { %>
+    <tr>
+      <td><a href="/admin/timelines/<%= t.id %>/edit"><%= t.title %></a></td>
+      <td><span class="badge <%= t.status === 'published' ? 'badge-published' : 'badge-draft' %>"><%= t.status %></span></td>
+      <td><%= typeof t.eventsCount !== 'undefined' ? t.eventsCount : '—' %></td>
+      <td><%= t.updatedAt ? new Date(t.updatedAt).toLocaleString() : '—' %></td>
+      <td>
+        <a href="/admin/timelines/<%= t.id %>/edit">Edit</a>
+        · <a href="/admin/timelines/<%= t.id %>/export">Export</a>
+        · <form method="post" action="/admin/timelines/<%= t.id %>/delete" style="display:inline;" onsubmit="return confirm('Delete this timeline permanently?');">
+          <input type="hidden" name="_csrf_token" value="<%= csrfToken %>">
+          <button type="submit" class="link-btn">Delete</button>
+        </form>
+      </td>
+    </tr>
+    <% }); %>
+  </tbody>
+</table>
+
+<% if (timelines.length === 0) { %>
+<p>No timelines yet.</p>
+<% } %>
+
+<%- include('../partials/admin-footer') %>

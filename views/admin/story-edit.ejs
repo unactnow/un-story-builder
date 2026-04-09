@@ -1,0 +1,213 @@
+<%- include('../partials/admin-head') %>
+
+<% var _labels = { hero_image: 'Hero: Image', hero_video: 'Hero: Video', full_image: 'Full-Screen Image', full_image_overlay_left: 'Image + Overlay (Left)', full_image_overlay_center: 'Image + Overlay (Center)', full_image_overlay_right: 'Image + Overlay (Right)', full_image_subtitle: 'Image + Statement Subtitle', split_image_left: 'Split: Image Left, Text Right', split_image_right: 'Split: Image Right, Text Left', text_block: 'Text Block (Heading + Body)', text_body: 'Text Block (Body Only)', quote_dark: 'Quote (Dark / Blue)', quote_light: 'Quote (Light / White)', divider: 'Divider' }; %>
+<% var _blockTypes = ['hero_image','hero_video','full_image','full_image_overlay_left','full_image_overlay_center','full_image_overlay_right','full_image_subtitle','split_image_left','split_image_right','text_block','text_body','quote_dark','quote_light','divider']; %>
+<% var _empty = { heading: '', subheading: '', bodyText: '', quoteText: '', quoteSpeaker: '', quoteSpeakerTitle: '', imageUrl: '', imageAlt: '', imageCaption: '', videoUrl: '' }; %>
+
+<h2><%= story ? 'Edit story' : 'New story' %><% if (story && revisionCount > 0) { %> <span class="title-meta">(<a href="/admin/stories/<%= story.id %>/revisions"><%= revisionCount %> revision<%= revisionCount !== 1 ? 's' : '' %></a>)</span><% } %></h2>
+
+<form method="post" action="<%= story ? '/admin/stories/' + story.id + '/edit' : '/admin/stories/new' %>" id="story-form">
+  <input type="hidden" name="_csrf_token" value="<%= csrfToken %>">
+
+  <div class="form-row">
+    <label for="title">Title *</label>
+    <input type="text" id="title" name="title" required value="<%= story ? story.title : '' %>" class="wide">
+  </div>
+  <div class="form-row">
+    <label for="slug">Slug</label>
+    <input type="text" id="slug" name="slug" value="<%= story ? story.slug : '' %>" class="wide">
+    <span class="hint">Auto-generated from the title. Edit only if needed.</span>
+  </div>
+  <div class="form-row">
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      <% var st = story ? story.status : 'draft'; %>
+      <option value="draft" <%= st === 'draft' ? 'selected' : '' %>>draft</option>
+      <option value="published" <%= st === 'published' ? 'selected' : '' %>>published</option>
+    </select>
+  </div>
+
+  <div class="btn-row">
+    <button type="submit" class="btn">Save</button>
+    <% if (story) { %>
+    <a href="/admin/stories/<%= story.id %>/export" class="btn btn-outline">Export</a>
+    <button type="button" class="btn btn-outline" style="color:var(--color-error);border-color:var(--color-error);" id="btn-delete-story">Delete</button>
+    <% } %>
+  </div>
+
+  <h3>Blocks</h3>
+  <div id="block-list" class="block-list" data-drag-container data-reorder-url="<%= story ? '/admin/stories/' + story.id + '/blocks/reorder' : '' %>" data-reorder-id-key="blockIds">
+    <% blocks.forEach(function(block, i) { %>
+    <%- include('./partials/story-block', { block: block, index: i }) %>
+    <% }); %>
+  </div>
+
+  <div class="add-block-bar">
+    <label for="add-block-type" class="visually-hidden">Block type</label>
+    <select id="add-block-type">
+      <% _blockTypes.forEach(function(bt) { %>
+      <option value="<%= bt %>"><%= _labels[bt] %></option>
+      <% }); %>
+    </select>
+    <button type="button" class="btn btn-outline" id="btn-add-block">Add Block</button>
+  </div>
+
+  <p class="hint">Preview by exporting and opening the generated HTML. Image URLs show a thumbnail below each field when valid.</p>
+</form>
+
+<% if (story) { %>
+<form method="post" action="/admin/stories/<%= story.id %>/delete" id="delete-story-form" style="display:none;">
+  <input type="hidden" name="_csrf_token" value="<%= csrfToken %>">
+</form>
+<% } %>
+
+<% _blockTypes.forEach(function(bt) { %>
+<template id="tpl-block-<%= bt %>">
+<%- include('./partials/story-block-tpl', { block: Object.assign({}, _empty, { blockType: bt }) }) %>
+</template>
+<% }); %>
+
+<script src="/js/drag-reorder.js"></script>
+<script>
+(function () {
+  var slugManuallyEdited = false;
+  var titleEl = document.getElementById('title');
+  var slugEl = document.getElementById('slug');
+  if (titleEl && slugEl) {
+    titleEl.addEventListener('input', function () {
+      if (slugManuallyEdited) return;
+      slugEl.value = titleEl.value
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+    });
+    slugEl.addEventListener('input', function () { slugManuallyEdited = true; });
+  }
+
+  function reindexStoryBlocks() {
+    var list = document.getElementById('block-list');
+    if (!list) return;
+    var cards = list.querySelectorAll('.block-card');
+    cards.forEach(function (card, i) {
+      card.querySelectorAll('[name^="blocks["]').forEach(function (el) {
+        el.name = el.name.replace(/^blocks\[[^\]]+\]/, 'blocks[' + i + ']');
+      });
+      var so = card.querySelector('.sort-order-input');
+      if (so) so.value = i;
+    });
+  }
+
+  var blockListEl = document.getElementById('block-list');
+  if (blockListEl) blockListEl.addEventListener('dragreorder', reindexStoryBlocks);
+
+  function wireBlockCard(card) {
+    var header = card.querySelector('.block-card-header');
+    if (header) {
+      header.addEventListener('click', function (e) {
+        if (e.target.closest('.block-actions') || e.target.closest('.drag-handle')) return;
+        card.classList.toggle('expanded');
+      });
+    }
+    card.querySelector('.btn-remove').addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (!confirm('Remove this block?')) return;
+      card.remove();
+      reindexStoryBlocks();
+    });
+    card.querySelector('.btn-move-up').addEventListener('click', function (e) {
+      e.stopPropagation();
+      var prev = card.previousElementSibling;
+      if (prev && prev.classList.contains('block-card')) {
+        card.parentNode.insertBefore(card, prev);
+        reindexStoryBlocks();
+        document.getElementById('block-list').dispatchEvent(new CustomEvent('dragreorder', { bubbles: true }));
+        var url = document.getElementById('block-list').getAttribute('data-reorder-url');
+        if (url) {
+          var key = document.getElementById('block-list').getAttribute('data-reorder-id-key') || 'blockIds';
+          var ids = [];
+          document.querySelectorAll('#block-list .drag-item').forEach(function (it) {
+            var id = it.getAttribute('data-id');
+            if (id) ids.push(id);
+          });
+          if (ids.length === document.querySelectorAll('#block-list .drag-item').length) {
+            var meta = document.querySelector('meta[name="csrf-token"]');
+            var body = {}; body[key] = ids;
+            fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': meta ? meta.getAttribute('content') : '' }, body: JSON.stringify(body) }).catch(function () {});
+          }
+        }
+      }
+    });
+    card.querySelector('.btn-move-down').addEventListener('click', function (e) {
+      e.stopPropagation();
+      var next = card.nextElementSibling;
+      if (next && next.classList.contains('block-card')) {
+        card.parentNode.insertBefore(card, next.nextSibling);
+        reindexStoryBlocks();
+        document.getElementById('block-list').dispatchEvent(new CustomEvent('dragreorder', { bubbles: true }));
+        var url = document.getElementById('block-list').getAttribute('data-reorder-url');
+        if (url) {
+          var key = document.getElementById('block-list').getAttribute('data-reorder-id-key') || 'blockIds';
+          var ids = [];
+          document.querySelectorAll('#block-list .drag-item').forEach(function (it) {
+            var id = it.getAttribute('data-id');
+            if (id) ids.push(id);
+          });
+          if (ids.length === document.querySelectorAll('#block-list .drag-item').length) {
+            var meta = document.querySelector('meta[name="csrf-token"]');
+            var body = {}; body[key] = ids;
+            fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': meta ? meta.getAttribute('content') : '' }, body: JSON.stringify(body) }).catch(function () {});
+          }
+        }
+      }
+    });
+    card.querySelectorAll('.img-url').forEach(function (inp) {
+      inp.addEventListener('input', function () { updateImagePreview(inp); });
+      updateImagePreview(inp);
+    });
+  }
+
+  function updateImagePreview(inp) {
+    var v = (inp.value || '').trim();
+    var wrap = inp.parentNode.parentNode;
+    var prev = wrap.querySelector('.image-preview');
+    if (prev) prev.remove();
+    if (!/^https?:\/\//i.test(v)) return;
+    var div = document.createElement('div');
+    div.className = 'image-preview';
+    var img = document.createElement('img');
+    img.alt = '';
+    img.src = v;
+    img.onerror = function () { div.style.display = 'none'; };
+    div.appendChild(img);
+    wrap.appendChild(div);
+  }
+
+  document.querySelectorAll('#block-list .block-card').forEach(wireBlockCard);
+
+  document.getElementById('btn-add-block').addEventListener('click', function () {
+    var bt = document.getElementById('add-block-type').value;
+    var tpl = document.getElementById('tpl-block-' + bt);
+    if (!tpl) return;
+    var list = document.getElementById('block-list');
+    var n = list.querySelectorAll('.block-card').length;
+    var html = tpl.innerHTML.replace(/__INDEX__/g, String(n));
+    var wrap = document.createElement('div');
+    wrap.innerHTML = html.trim();
+    var card = wrap.firstElementChild;
+    list.appendChild(card);
+    wireBlockCard(card);
+    reindexStoryBlocks();
+  });
+
+  <% if (story) { %>
+  document.getElementById('btn-delete-story').addEventListener('click', function () {
+    if (confirm('Delete this story permanently?')) document.getElementById('delete-story-form').submit();
+  });
+  <% } %>
+})();
+</script>
+
+<%- include('../partials/admin-footer') %>

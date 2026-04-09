@@ -1,0 +1,26 @@
+<%- include('../partials/admin-head') %>
+
+<h2>Export: <%= timeline.title %></h2>
+<p><%= typeof eventsCount !== 'undefined' ? eventsCount : 0 %> events · Exported <%= new Date().toISOString() %></p>
+
+<div class="btn-row">
+  <button type="button" class="btn" id="btn-copy-export">Copy to Clipboard</button>
+  <a href="/admin/timelines/<%= timeline.id %>/export/download" class="btn btn-outline">Download HTML</a>
+</div>
+
+<pre class="export-pre"><code><%= htmlOutput %></code></pre>
+
+<p><a href="/admin/timelines/<%= timeline.id %>/edit">Back to Edit</a></p>
+
+<script>
+var rawHtml = <%- JSON.stringify(htmlOutput) %>;
+document.getElementById('btn-copy-export').addEventListener('click', function () {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(rawHtml).then(function () { alert('Copied to clipboard.'); }).catch(function () { alert('Copy failed.'); });
+  } else {
+    alert('Clipboard API not available.');
+  }
+});
+</script>
+
+<%- include('../partials/admin-footer') %>

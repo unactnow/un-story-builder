@@ -1,0 +1,10 @@
+node_modules/
+.npm-cache/
+.env
+database.sqlite
+uploads/*
+!uploads/.gitkeep
+*.log
+.DS_Store
+.cursor/
+.vercel
