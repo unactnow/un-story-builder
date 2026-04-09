@@ -9,6 +9,8 @@
     "seed": "node scripts/seed.js",
     "migrate:local": "node scripts/migrate-local-to-neon.js",
     "copy:users": "node scripts/copy-users-from-source-db.js",
+    "clone:users-to-auth": "node scripts/clone-users-from-app-to-auth.js",
+    "drop:legacy-user-tables": "node scripts/drop-legacy-user-tables-on-app-db.js",
     "import-youth": "node scripts/import-youth.js",
     "setup": "bash scripts/setup-neon.sh"
   },

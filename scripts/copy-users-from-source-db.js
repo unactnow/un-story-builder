@@ -80,8 +80,35 @@ async function main() {
       n += 1;
     }
 
+    let tokRows = [];
+    try {
+      tokRows = (await clientSrc.query(
+        'SELECT * FROM password_reset_tokens ORDER BY "createdAt"'
+      )).rows;
+    } catch (e) {
+      if (e.code === '42P01') {
+        console.log('Source has no password_reset_tokens table; skipping tokens.');
+      } else {
+        throw e;
+      }
+    }
+    let tn = 0;
+    if (tokRows.length) {
+      const t0 = tokRows[0];
+      const tc = Object.keys(t0);
+      const tColList = tc.map((c) => `"${c.replace(/"/g, '""')}"`).join(', ');
+      const tPlace = tc.map((_, i) => `$${i + 1}`).join(', ');
+      const tokInsert = `INSERT INTO password_reset_tokens (${tColList}) VALUES (${tPlace}) ON CONFLICT (id) DO NOTHING`;
+      for (const row of tokRows) {
+        await clientDst.query(tokInsert, tc.map((c) => row[c]));
+        tn += 1;
+      }
+    }
+
     await clientDst.query('COMMIT');
-    console.log(`Copied ${n} user(s) from source ${replace ? '(replace mode)' : '(merge / upsert on username)'}.`);
+    console.log(
+      `Copied ${n} user(s) and ${tn} password_reset_token(s) from source ${replace ? '(replace mode)' : '(merge on username)'}`
+    );
   } catch (e) {
     await clientDst.query('ROLLBACK');
     throw e;
