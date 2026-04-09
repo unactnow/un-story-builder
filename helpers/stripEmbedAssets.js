@@ -25,8 +25,11 @@ function stripEmbeddedExportAssets(html) {
     ''
   );
 
-  // Base UN stylesheet (CDN)
-  s = s.replace(/<link\b[^>]*href=["'][^"']*un-peace-and-security-stylesheet[^"']*["'][^>]*>\s*/gi, '');
+  // Base UN stylesheet (CDN) — current repo name and legacy embeds
+  s = s.replace(
+    /<link\b[^>]*href=["'][^"']*(?:un-stylesheet|un-peace-and-security-stylesheet)[^"']*["'][^>]*>\s*/gi,
+    ''
+  );
 
   // Merged or legacy export stylesheets (relative or jsDelivr)
   s = s.replace(/<link\b[^>]*href=["'][^"']*\/export\/styles\.css[^"']*["'][^>]*>\s*/gi, '');

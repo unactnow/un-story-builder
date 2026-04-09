@@ -63,10 +63,10 @@ function mergedAssetUrlForPreview(req, relPath) {
 
 /** jsDelivr copy of the UN peace & security base typography stylesheet (same as photo essay template). */
 const BASE_PEACE_STYLESHEET_CDN =
-  'https://cdn.jsdelivr.net/gh/robertirish/un-peace-and-security-stylesheet@main/styles.css';
+  'https://cdn.jsdelivr.net/gh/unactnow/un-stylesheet@main/styles.css';
 
-/** Served from `public/vendor/un-peace-and-security-stylesheet/styles.css` for admin preview. */
-const BASE_PEACE_STYLESHEET_LOCAL = '/vendor/un-peace-and-security-stylesheet/styles.css';
+/** Served from `public/vendor/un-stylesheet/styles.css` for admin preview. */
+const BASE_PEACE_STYLESHEET_LOCAL = '/vendor/un-stylesheet/styles.css';
 
 /**
  * Base UN stylesheet: same-origin vendor file when `req` is set (admin preview); jsDelivr when building standalone export HTML.
