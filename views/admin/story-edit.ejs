@@ -18,11 +18,10 @@
     </div>
 
     <div class="btn-row">
-      <button type="submit" class="btn">Save</button>
+      <button type="submit" class="btn btn-save">Save</button>
       <% if (story) { %>
-      <button type="button" class="btn btn-outline" id="btn-preview-story" title="Save your edits and open a live preview in a new tab">Preview</button>
-      <a href="/admin/stories/<%= story.id %>/export" class="btn btn-outline">Export</a>
-      <button type="button" class="btn btn-outline" style="color:var(--color-error);border-color:var(--color-error);" id="btn-delete-story">Delete</button>
+      <button type="button" class="btn btn-outline btn-preview-story" title="Save your edits and go to the preview">Preview</button>
+      <a href="/admin/stories/<%= story.id %>/export" class="btn btn-outline btn-export-story">Export</a>
       <% } %>
     </div>
 
@@ -42,6 +41,19 @@
       </select>
       <button type="button" class="btn btn-outline" id="btn-add-block">Add block</button>
     </div>
+
+    <% if (story) { %>
+    <div class="form-actions-bottom">
+      <div class="btn-row">
+        <button type="submit" class="btn btn-save">Save</button>
+        <button type="button" class="btn btn-outline btn-preview-story" title="Save your edits and go to the preview">Preview</button>
+        <a href="/admin/stories/<%= story.id %>/export" class="btn btn-outline btn-export-story">Export</a>
+      </div>
+      <div class="btn-row btn-row-delete">
+        <button type="button" class="btn btn-outline" style="color:var(--color-error);border-color:var(--color-error);" id="btn-delete-story">Delete story</button>
+      </div>
+    </div>
+    <% } %>
   </div>
 
   <div class="term-edit-preview-col">
@@ -50,7 +62,7 @@
       <p class="hint" style="margin:0;">To add images/media to your story, upload your files to the UN website through Drupal, then copy the public URL and paste it into the matching field here (image URL, video URL, etc.).</p>
       <h3>Exporting HTML</h3>
       <ol>
-        <li>Use <strong>Preview</strong> to save your draft and open the rendered HTML in a new tab, or click <strong>Save</strong> to store edits without leaving this page</li>
+        <li>Use <strong>Preview</strong> to save your draft and open the rendered HTML in this window, or click <strong>Save</strong> to store edits without leaving this page</li>
         <li>Click <strong>Export</strong> (or open Export after saving from the stories list)</li>
         <li>On the export page, use <strong>Copy to clipboard</strong> or <strong>Download HTML</strong></li>
         <li>Paste or upload the generated HTML into Drupal (or your target page) according to your team’s publishing process</li>

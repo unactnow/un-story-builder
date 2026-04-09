@@ -308,6 +308,72 @@ button[type="submit"]:hover { background: var(--un-blue-dark); }
 
 .btn-row a:not(.btn):hover { color: var(--un-blue); }
 
+.form-actions-bottom {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.form-actions-bottom .btn-row-delete {
+    margin-top: 0.75rem;
+}
+
+.btn.is-loading {
+    cursor: wait;
+}
+
+a.btn.is-loading {
+    pointer-events: none;
+    opacity: 0.92;
+}
+
+.btn .preview-btn-spinner {
+    display: inline-block;
+    width: 0.9em;
+    height: 0.9em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: preview-btn-spin 0.55s linear infinite;
+    vertical-align: -0.12em;
+    margin-right: 0.35em;
+    opacity: 0.85;
+}
+
+@keyframes preview-btn-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.btn.is-save-success {
+    background: #15803d;
+    border-color: #15803d;
+    color: #fff;
+}
+
+.btn.btn-outline.is-save-success {
+    background: #15803d;
+    border-color: #15803d;
+    color: #fff;
+}
+
+.btn.btn-outline.is-save-success:hover {
+    background: #166534;
+    border-color: #166534;
+    color: #fff;
+}
+
+.btn.is-feedback-error {
+    border-color: var(--color-error);
+    color: var(--color-error);
+    background: transparent;
+}
+
+button.btn-save:disabled {
+    cursor: wait;
+}
+
 
 /* ---- dashboard stats ---- */
 
@@ -639,6 +705,37 @@ button[type="submit"]:hover { background: var(--un-blue-dark); }
 }
 
 /* ---- Lists & export helpers ---- */
+
+.admin-table-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.inline-delete-form {
+    display: inline;
+    margin: 0;
+}
+
+.admin-table-actions button.list-delete-link[type="submit"] {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-weight: inherit;
+    font-size: inherit;
+    border-radius: 0;
+    color: var(--color-error);
+    cursor: pointer;
+    line-height: inherit;
+}
+
+.admin-table-actions button.list-delete-link[type="submit"]:hover {
+    background: none;
+    color: #b91c1c;
+    text-decoration: underline;
+}
 
 .badge {
     display: inline-block;

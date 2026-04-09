@@ -5,7 +5,13 @@
 function stripEmbeddedExportAssets(html) {
   let s = String(html || '');
 
-  // Asset annotation comments from our exporters
+  // Asset annotation comments from our exporters (current + legacy wording)
+  s = s.replace(/<!--\s*Stylesheet — base typography and layout styles[\s\S]*?-->\s*/gi, '');
+  s = s.replace(/<!--\s*Stylesheet — UN Peace and Security base[\s\S]*?-->\s*/gi, '');
+  s = s.replace(/<!--\s*Stylesheet — feature story and timeline styles[\s\S]*?-->\s*/gi, '');
+  s = s.replace(/<!--\s*Stylesheet — feature story and timeline merged bundle[\s\S]*?-->\s*/gi, '');
+  s = s.replace(/<!--\s*Script — feature story and timeline scripts[\s\S]*?-->\s*/gi, '');
+  s = s.replace(/<!--\s*Script — feature story and timeline behaviour[\s\S]*?-->\s*/gi, '');
   s = s.replace(/<!--\s*Base UN peace and security[\s\S]*?-->\s*/gi, '');
   s = s.replace(/<!--\s*Feature story & timeline:[\s\S]*?-->\s*/gi, '');
   s = s.replace(/<!--\s*Feature story:[\s\S]*?-->\s*/gi, '');

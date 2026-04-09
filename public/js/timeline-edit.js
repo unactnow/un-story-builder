@@ -43,7 +43,6 @@
     }
     card.querySelector('.btn-remove').addEventListener('click', function (e) {
       e.stopPropagation();
-      if (!confirm('Remove this event?')) return;
       card.remove();
       reindexTimelineEvents();
     });
@@ -117,56 +116,155 @@
         if (confirm('Delete this timeline permanently?')) document.getElementById('delete-timeline-form').submit();
       });
     }
-    var btnPreview = document.getElementById('btn-preview-timeline');
-    if (btnPreview) {
-      btnPreview.addEventListener('click', function () {
-        if (window.quillAdmin) window.quillAdmin.syncEditors();
-        reindexTimelineEvents();
-        var action = timelineForm.getAttribute('action') || '';
-        var saveUrl = action.replace(/\/edit$/, '/preview-save');
-        var fd = new FormData(timelineForm);
-        var params = new URLSearchParams();
-        fd.forEach(function (value, key) {
-          params.append(key, value);
-        });
-        var meta = document.querySelector('meta[name="csrf-token"]');
-        btnPreview.disabled = true;
-        fetch(saveUrl, {
-          method: 'POST',
-          body: params,
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            Accept: 'application/json',
-            'X-CSRF-Token': meta ? meta.getAttribute('content') : '',
-          },
-          credentials: 'same-origin',
-        })
-          .then(function (r) {
-            return r.json().then(function (data) {
-              return { ok: r.ok, status: r.status, data: data };
-            });
-          })
-          .then(function (result) {
-            if (result.ok && result.data && result.data.ok && result.data.previewUrl) {
-              window.open(result.data.previewUrl, '_blank', 'noopener');
-            } else {
-              var err = (result.data && result.data.error) || 'unknown';
-              var msg =
-                err === 'title_required'
-                  ? 'Title is required before preview.'
-                  : err === 'not_found'
-                    ? 'Timeline was not found.'
-                    : 'Could not save preview. Try again.';
-              window.alert(msg);
-            }
-          })
-          .catch(function () {
-            window.alert('Preview request failed. Check your connection and try again.');
-          })
-          .finally(function () {
-            btnPreview.disabled = false;
-          });
+  }
+  if (timelineForm) {
+    function setPreviewTimelineLoading(loading) {
+      document.querySelectorAll('.btn-preview-timeline').forEach(function (b) {
+        if (loading) {
+          if (!b.dataset.previewLabel) b.dataset.previewLabel = b.innerHTML;
+          b.disabled = true;
+          b.classList.remove('is-feedback-error');
+          b.classList.add('is-loading');
+          b.setAttribute('aria-busy', 'true');
+          b.innerHTML =
+            '<span class="preview-btn-spinner" aria-hidden="true"></span> Loading…';
+        } else {
+          b.disabled = false;
+          b.classList.remove('is-loading');
+          b.removeAttribute('aria-busy');
+          if (b.dataset.previewLabel) b.innerHTML = b.dataset.previewLabel;
+        }
       });
     }
+
+    function setPreviewTimelineError(msg) {
+      document.querySelectorAll('.btn-preview-timeline').forEach(function (b) {
+        b.disabled = false;
+        b.classList.remove('is-loading');
+        b.classList.add('is-feedback-error');
+        b.removeAttribute('aria-busy');
+        if (!b.dataset.previewLabel) b.dataset.previewLabel = 'Preview';
+        b.textContent = msg;
+        window.setTimeout(function () {
+          b.classList.remove('is-feedback-error');
+          b.innerHTML = b.dataset.previewLabel;
+        }, 4000);
+      });
+    }
+
+    function setSaveButtonsSubmitting(submitting) {
+      document.querySelectorAll('#timeline-form .btn-save').forEach(function (b) {
+        if (submitting) {
+          if (!b.dataset.saveLabel) b.dataset.saveLabel = b.innerHTML;
+          b.disabled = true;
+          b.classList.add('is-loading');
+          b.setAttribute('aria-busy', 'true');
+          b.innerHTML =
+            '<span class="preview-btn-spinner" aria-hidden="true"></span> Saving…';
+        } else {
+          b.disabled = false;
+          b.classList.remove('is-loading');
+          b.removeAttribute('aria-busy');
+          if (b.dataset.saveLabel) b.innerHTML = b.dataset.saveLabel;
+        }
+      });
+    }
+
+    function maybeShowSaveSuccessFeedback() {
+      var flash = document.querySelector('.flash.flash-success');
+      if (!flash) return;
+      var t = (flash.textContent || '').toLowerCase();
+      if (t.indexOf('saved') === -1 && t.indexOf('created') === -1) return;
+      document.querySelectorAll('#timeline-form .btn-save').forEach(function (b) {
+        if (!b.dataset.saveLabel) b.dataset.saveLabel = b.innerHTML;
+        b.classList.add('is-save-success');
+        b.textContent = 'Saved!';
+        window.setTimeout(function () {
+          b.classList.remove('is-save-success');
+          b.innerHTML = b.dataset.saveLabel;
+        }, 2500);
+      });
+    }
+
+    timelineForm.addEventListener('submit', function () {
+      if (window.quillAdmin) window.quillAdmin.syncEditors();
+      setSaveButtonsSubmitting(true);
+    });
+
+    maybeShowSaveSuccessFeedback();
+
+    function setExportTimelineLoading(loading) {
+      document.querySelectorAll('.btn-export-timeline').forEach(function (b) {
+        if (loading) {
+          if (!b.dataset.exportLabel) b.dataset.exportLabel = b.innerHTML;
+          b.classList.add('is-loading');
+          b.setAttribute('aria-busy', 'true');
+          b.setAttribute('aria-disabled', 'true');
+          b.innerHTML =
+            '<span class="preview-btn-spinner" aria-hidden="true"></span> Loading…';
+        } else {
+          b.classList.remove('is-loading');
+          b.removeAttribute('aria-busy');
+          b.removeAttribute('aria-disabled');
+          if (b.dataset.exportLabel) b.innerHTML = b.dataset.exportLabel;
+        }
+      });
+    }
+
+    function runPreviewTimeline() {
+      if (window.quillAdmin) window.quillAdmin.syncEditors();
+      reindexTimelineEvents();
+      var action = timelineForm.getAttribute('action') || '';
+      var saveUrl = action.replace(/\/edit$/, '/preview-save');
+      var fd = new FormData(timelineForm);
+      var params = new URLSearchParams();
+      fd.forEach(function (value, key) {
+        params.append(key, value);
+      });
+      var meta = document.querySelector('meta[name="csrf-token"]');
+      setPreviewTimelineLoading(true);
+      fetch(saveUrl, {
+        method: 'POST',
+        body: params,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+          'X-CSRF-Token': meta ? meta.getAttribute('content') : '',
+        },
+        credentials: 'same-origin',
+      })
+        .then(function (r) {
+          return r.json().then(function (data) {
+            return { ok: r.ok, status: r.status, data: data };
+          });
+        })
+        .then(function (result) {
+          if (result.ok && result.data && result.data.ok && result.data.previewUrl) {
+            window.location.href = result.data.previewUrl;
+            return;
+          }
+          var err = (result.data && result.data.error) || 'unknown';
+          var shortMsg =
+            err === 'title_required'
+              ? 'Title required'
+              : err === 'not_found'
+                ? 'Not found'
+                : 'Preview failed';
+          setPreviewTimelineError(shortMsg);
+        })
+        .catch(function () {
+          setPreviewTimelineError('Request failed');
+        });
+    }
+    document.querySelectorAll('.btn-preview-timeline').forEach(function (btn) {
+      btn.addEventListener('click', runPreviewTimeline);
+    });
+    document.querySelectorAll('.btn-export-timeline').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        setExportTimelineLoading(true);
+        window.location.href = a.getAttribute('href');
+      });
+    });
   }
 })();

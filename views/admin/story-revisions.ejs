@@ -17,7 +17,7 @@
       <td><%= rev.createdAt ? new Date(rev.createdAt).toLocaleString() : '—' %></td>
       <td><%= rev.revisedBy || '—' %></td>
       <td>
-        <form method="post" action="/admin/stories/<%= story.id %>/revisions/<%= rev.id %>/restore" style="display:inline;" onsubmit="return confirm('Restore this revision? Current content will be saved as a new revision first.');">
+        <form method="post" action="/admin/stories/<%= story.id %>/revisions/<%= rev.id %>/restore" style="display:inline;">
           <input type="hidden" name="_csrf_token" value="<%= csrfToken %>">
           <button type="submit" class="btn btn-outline btn-sm">Restore</button>
         </form>

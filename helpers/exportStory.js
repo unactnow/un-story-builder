@@ -296,7 +296,7 @@ ${qInner}
 }
 
 /**
- * @param {{ req?: import('express').Request }} [options] - pass `{ req }` for admin preview (jsDelivr in production, same-origin in dev)
+ * @param {{ req?: import('express').Request }} [options] - pass `{ req }` for admin preview (includes browser reset CSS; export omits it)
  */
 function generateStoryHTML(story, blocks, options = {}) {
   const assetUrl = options.req
@@ -313,12 +313,17 @@ function generateStoryHTML(story, blocks, options = {}) {
 
   const progress = '<div class="fs-progress" id="fs-progress" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>';
 
-  const commentPreviewReset = `<!-- ${htmlCommentSafe('Browser default reset (standalone preview / export)')} -->`;
+  const isPreview = !!(options.req && typeof options.req.get === 'function');
+  const commentPreviewReset = `<!-- ${htmlCommentSafe('Browser default reset (admin preview only)')} -->`;
   const previewResetLink = `<link href="${escapeHtml(assetUrl('/export/preview-reset.css'))}" rel="stylesheet">`;
 
-  const commentBaseStylesheet = `<!-- ${htmlCommentSafe('Base UN peace and security stylesheet (site-wide typography and layout)')} -->`;
+  const commentBaseStylesheet = `<!-- ${htmlCommentSafe(
+    'Stylesheet — base typography and layout styles',
+  )} -->`;
   const stylesheet = `<link href="${escapeHtml(basePeaceAndSecurityStylesheetHref(options.req))}" rel="stylesheet">`;
-  const commentMergedStylesheet = `<!-- ${htmlCommentSafe('Feature story & timeline: styles.css (feature story + timeline)')} -->`;
+  const commentMergedStylesheet = `<!-- ${htmlCommentSafe(
+    'Stylesheet — feature story and timeline styles',
+  )} -->`;
   const mergedStylesheet = `<link href="${escapeHtml(assetUrl('/export/styles.css'))}" rel="stylesheet">`;
 
   const storyTitlePlain = (() => {
@@ -338,13 +343,26 @@ function generateStoryHTML(story, blocks, options = {}) {
   const essayOpen = '<div class="fs-essay" id="fs-essay" role="article" aria-label="Feature story">';
   const essayClose = '</div>';
 
-  const commentMergedScript = `<!-- ${htmlCommentSafe('Feature story & timeline: functions.js (feature story + timeline behaviour)')} -->`;
+  const commentStoryStart = `<!-- ${htmlCommentSafe('Feature story — start')} -->`;
+  const commentStoryEnd = `<!-- ${htmlCommentSafe('Feature story — end')} -->`;
+
+  const commentMergedScript = `<!-- ${htmlCommentSafe(
+    'Script — feature story and timeline scripts',
+  )} -->`;
   const scriptBlock = `<script src="${escapeHtml(assetUrl('/export/functions.js'))}"></script>`;
 
+  const headLead = isPreview
+    ? [commentPreviewReset, previewResetLink, '']
+    : [];
+
+  const commentExportAttribution = `<!-- ${htmlCommentSafe(
+    'United Nations Peace and Security feature story and timeline builder, developed by Robert Irish',
+  )} -->`;
+
   return [
-    commentPreviewReset,
-    previewResetLink,
+    commentExportAttribution,
     '',
+    ...headLead,
     commentBaseStylesheet,
     stylesheet,
     '',
@@ -355,10 +373,12 @@ function generateStoryHTML(story, blocks, options = {}) {
     '',
     progress,
     '',
+    commentStoryStart,
     essayOpen,
     '',
     inner,
     essayClose,
+    commentStoryEnd,
     '',
     commentMergedScript,
     scriptBlock,

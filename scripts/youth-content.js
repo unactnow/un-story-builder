@@ -1,6 +1,6 @@
 /**
- * Seeded example: content aligned with photo-essay-template.html (UN photo essay blocks demo).
- * A separate minimal timeline sample is included; replace URLs with production assets when publishing.
+ * Seeded example: feature story aligned with photo-essay-template.html (UN photo essay blocks demo).
+ * Timeline example matches youth-timeline.html (Youth Have Always Moved History — eight milestones, no images).
  */
 
 module.exports = {
@@ -153,31 +153,74 @@ module.exports = {
     },
   ],
   timeline: {
-    title: 'Sample timeline',
+    title: 'Youth Have Always Moved History',
     description:
-      'Replace this subtitle with your own. It appears under the title in the exported timeline.',
+      '<p>From lunch counters to climate strikes, young people have shaped the course of peace and justice worldwide.</p>',
   },
   timelineEvents: [
     {
       sortOrder: 0,
-      dateText: 'Phase 1',
-      location: 'Example',
-      heading: 'First milestone',
-      description: 'One or two sentences describing the event. Add an image URL if needed.',
+      dateText: '1960',
+      location: 'United States',
+      heading: 'Sit-In Movement',
+      description:
+        'Four students sit at a segregated lunch counter, sparking a nationwide nonviolent movement that helps transform civil rights in America.',
     },
     {
       sortOrder: 1,
-      dateText: 'Phase 2',
-      location: 'Example',
-      heading: 'Second milestone',
-      description: 'Use the event list to build your chronology; drag to reorder.',
+      dateText: '1976',
+      location: 'South Africa',
+      heading: 'Soweto Uprising',
+      description:
+        'Black school students protest apartheid education, igniting global outrage and intensifying the fight for freedom.',
     },
     {
       sortOrder: 2,
-      dateText: 'Phase 3',
-      location: 'Example',
-      heading: 'Third milestone',
-      description: 'Export when ready and paste the HTML into Drupal per your workflow.',
+      dateText: '1989',
+      location: 'Czechoslovakia',
+      heading: 'Velvet Revolution',
+      description:
+        'Student demonstrations grow into a peaceful revolution that leads to democratic transition.',
+    },
+    {
+      sortOrder: 3,
+      dateText: '2010–2011',
+      location: 'Tunisia',
+      heading: 'Arab Spring',
+      description:
+        'Fueled by unemployment and exclusion, youth lead nationwide protests that ignite the Arab Spring and demand political change.',
+    },
+    {
+      sortOrder: 4,
+      dateText: '2012',
+      location: 'India',
+      heading: 'Delhi Anti-Rape Protests',
+      description:
+        'Following the brutal gang rape and murder of a young woman in Delhi, youth mobilize nationwide demanding justice and stronger protections for women, leading to major legal reforms.',
+    },
+    {
+      sortOrder: 5,
+      dateText: '2012',
+      location: 'Pakistan',
+      heading: 'The "Malala Moment"',
+      description:
+        "After Malala Yousafzai is shot for going to school, tens of thousands rally across Pakistan demanding girls' right to education and rejecting extremism.",
+    },
+    {
+      sortOrder: 6,
+      dateText: '2015',
+      location: 'Argentina / Global',
+      heading: 'Ni Una Menos (Not One Less)',
+      description:
+        'An intergenerational movement with youth at its heart reshapes laws and public discourse on gender-based violence.',
+    },
+    {
+      sortOrder: 7,
+      dateText: '2018–Present',
+      location: 'Global',
+      heading: 'Fridays for Future',
+      description:
+        'Millions of students in over 150 countries strike for climate action, linking environmental justice to peace and their right to a future.',
     },
   ],
 };

@@ -18,12 +18,12 @@
       <td><a href="/admin/timelines/<%= t.id %>/edit"><%= t.title %></a></td>
       <td><%= typeof t.eventsCount !== 'undefined' ? t.eventsCount : '—' %></td>
       <td><%= t.updatedAt ? new Date(t.updatedAt).toLocaleString() : '—' %></td>
-      <td>
-        <a href="/admin/timelines/<%= t.id %>/edit">Edit</a>
-        · <a href="/admin/timelines/<%= t.id %>/export">Export</a>
-        · <form method="post" action="/admin/timelines/<%= t.id %>/delete" style="display:inline;" onsubmit="return confirm('Delete this timeline permanently?');">
+      <td class="admin-table-actions">
+        <a href="/admin/timelines/<%= t.id %>/edit" class="btn btn-sm">Edit</a>
+        <a href="/admin/timelines/<%= t.id %>/export" class="btn btn-sm js-export-nav">Export</a>
+        <form method="post" action="/admin/timelines/<%= t.id %>/delete" class="inline-delete-form" onsubmit="return confirm('Delete this timeline permanently?');">
           <input type="hidden" name="_csrf_token" value="<%= csrfToken %>">
-          <button type="submit" class="link-btn">Delete</button>
+          <button type="submit" class="list-delete-link">Delete</button>
         </form>
       </td>
     </tr>
@@ -35,4 +35,5 @@
 <p>No timelines yet.</p>
 <% } %>
 
+<script src="/js/export-link-loading.js"></script>
 <%- include('../partials/admin-footer') %>

@@ -18,12 +18,12 @@
       <td><a href="/admin/stories/<%= s.id %>/edit"><%= s.title %></a></td>
       <td><%= typeof s.blocksCount !== 'undefined' ? s.blocksCount : '—' %></td>
       <td><%= s.updatedAt ? new Date(s.updatedAt).toLocaleString() : '—' %></td>
-      <td>
-        <a href="/admin/stories/<%= s.id %>/edit">Edit</a>
-        · <a href="/admin/stories/<%= s.id %>/export">Export</a>
-        · <form method="post" action="/admin/stories/<%= s.id %>/delete" style="display:inline;" onsubmit="return confirm('Delete this story permanently?');">
+      <td class="admin-table-actions">
+        <a href="/admin/stories/<%= s.id %>/edit" class="btn btn-sm">Edit</a>
+        <a href="/admin/stories/<%= s.id %>/export" class="btn btn-sm js-export-nav">Export</a>
+        <form method="post" action="/admin/stories/<%= s.id %>/delete" class="inline-delete-form" onsubmit="return confirm('Delete this story permanently?');">
           <input type="hidden" name="_csrf_token" value="<%= csrfToken %>">
-          <button type="submit" class="link-btn">Delete</button>
+          <button type="submit" class="list-delete-link">Delete</button>
         </form>
       </td>
     </tr>
@@ -35,4 +35,5 @@
 <p>No stories yet.</p>
 <% } %>
 
+<script src="/js/export-link-loading.js"></script>
 <%- include('../partials/admin-footer') %>

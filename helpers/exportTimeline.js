@@ -21,7 +21,7 @@ function safeUrl(url) {
 }
 
 /**
- * @param {{ req?: import('express').Request }} [options] - pass `{ req }` for admin preview (jsDelivr in production, same-origin in dev)
+ * @param {{ req?: import('express').Request }} [options] - pass `{ req }` for admin preview (includes browser reset CSS; export omits it)
  */
 function generateTimelineHTML(timeline, events, options = {}) {
   const assetUrl = options.req
@@ -44,12 +44,17 @@ function generateTimelineHTML(timeline, events, options = {}) {
     return ao - bo;
   });
 
-  const commentPreviewReset = `<!-- ${htmlCommentSafe('Browser default reset (standalone preview / export)')} -->`;
+  const isPreview = !!(options.req && typeof options.req.get === 'function');
+  const commentPreviewReset = `<!-- ${htmlCommentSafe('Browser default reset (admin preview only)')} -->`;
   const previewResetLink = `<link href="${escapeHtml(assetUrl('/export/preview-reset.css'))}" rel="stylesheet">`;
 
-  const commentBaseStylesheet = `<!-- ${htmlCommentSafe('Base UN peace and security stylesheet (site-wide typography and layout)')} -->`;
+  const commentBaseStylesheet = `<!-- ${htmlCommentSafe(
+    'Stylesheet — base typography and layout styles',
+  )} -->`;
   const stylesheet = `<link href="${escapeHtml(basePeaceAndSecurityStylesheetHref(options.req))}" rel="stylesheet">`;
-  const commentMergedStylesheet = `<!-- ${htmlCommentSafe('Feature story & timeline: styles.css (feature story + timeline)')} -->`;
+  const commentMergedStylesheet = `<!-- ${htmlCommentSafe(
+    'Stylesheet — feature story and timeline styles',
+  )} -->`;
   const mergedStylesheet = `<link href="${escapeHtml(assetUrl('/export/styles.css'))}" rel="stylesheet">`;
 
   const header = `<div class="tl-header">
@@ -126,20 +131,35 @@ ${header}
 ${items}\t</ol>
 </section>`;
 
-  const commentMergedScript = `<!-- ${htmlCommentSafe('Feature story & timeline: functions.js (feature story + timeline behaviour)')} -->`;
+  const commentTimelineStart = `<!-- ${htmlCommentSafe('Timeline — start')} -->`;
+  const commentTimelineEnd = `<!-- ${htmlCommentSafe('Timeline — end')} -->`;
+
+  const commentMergedScript = `<!-- ${htmlCommentSafe(
+    'Script — feature story and timeline scripts',
+  )} -->`;
   const scriptBlock = `<script src="${escapeHtml(assetUrl('/export/functions.js'))}"></script>`;
 
+  const headLead = isPreview
+    ? [commentPreviewReset, previewResetLink, '']
+    : [];
+
+  const commentExportAttribution = `<!-- ${htmlCommentSafe(
+    'United Nations Peace and Security feature story and timeline builder, developed by Robert Irish',
+  )} -->`;
+
   return [
-    commentPreviewReset,
-    previewResetLink,
+    commentExportAttribution,
     '',
+    ...headLead,
     commentBaseStylesheet,
     stylesheet,
     '',
     commentMergedStylesheet,
     mergedStylesheet,
     '',
+    commentTimelineStart,
     section,
+    commentTimelineEnd,
     '',
     commentMergedScript,
     scriptBlock,

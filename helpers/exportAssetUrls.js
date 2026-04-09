@@ -1,8 +1,7 @@
 /**
  * Base URL for story / timeline export CSS and JS (`styles.css`, `functions.js`) in exported HTML.
- * Defaults to jsDelivr serving files from this repo's `public/` on GitHub.
- *
- * Override with EXPORT_ASSET_BASE_URL (e.g. your deployed app or another CDN base that includes `/public` in the path).
+ * Defaults to jsDelivr `gh` URLs for this repo. jsDelivr only serves **public** GitHub repos; private
+ * repos return 404. Override with EXPORT_ASSET_BASE_URL (e.g. your deployed site origin) if the repo is private.
  */
 const DEFAULT_JSDELIVR_REPO = process.env.EXPORT_JSDELIVR_REPO || 'unactnow/un-feature-stories-timelines';
 const DEFAULT_JSDELIVR_REF = process.env.EXPORT_JSDELIVR_REF || 'main';
@@ -48,16 +47,14 @@ function exportAssetUrlForRequest(req, relPath) {
 }
 
 /**
- * Admin preview: in production, merged CSS/JS use jsDelivr (same URLs as export downloads).
- * In non-production, use same-origin URLs so preview works offline / without CDN.
+ * Admin preview: always use same-origin URLs when `req` is available so preview works on any
+ * deployment (Vercel/Railway) without relying on jsDelivr or a public GitHub repo.
+ * Standalone HTML (no `req`) uses `exportAssetUrl` — set `EXPORT_ASSET_BASE_URL` or rely on jsDelivr defaults.
  *
  * @param {import('express').Request} req
  * @param {string} relPath - path starting with /, e.g. /export/styles.css
  */
 function mergedAssetUrlForPreview(req, relPath) {
-  if (process.env.NODE_ENV === 'production') {
-    return exportAssetUrl(relPath);
-  }
   if (req && typeof req.get === 'function') {
     return exportAssetUrlForRequest(req, relPath);
   }
@@ -68,22 +65,19 @@ function mergedAssetUrlForPreview(req, relPath) {
 const BASE_PEACE_STYLESHEET_CDN =
   'https://cdn.jsdelivr.net/gh/robertirish/un-peace-and-security-stylesheet@main/styles.css';
 
-/** Served from `public/vendor/un-peace-and-security-stylesheet/styles.css` for offline local preview. */
+/** Served from `public/vendor/un-peace-and-security-stylesheet/styles.css` for admin preview. */
 const BASE_PEACE_STYLESHEET_LOCAL = '/vendor/un-peace-and-security-stylesheet/styles.css';
 
 /**
- * Base UN stylesheet: CDN for export and production preview; same-origin local file for non-production preview only.
+ * Base UN stylesheet: same-origin vendor file when `req` is set (admin preview); jsDelivr when building standalone export HTML.
  *
- * @param {import('express').Request | undefined} req - set when rendering admin preview
+ * @param {import('express').Request | undefined} req
  */
 function basePeaceAndSecurityStylesheetHref(req) {
-  if (!req || typeof req.get !== 'function') {
-    return BASE_PEACE_STYLESHEET_CDN;
+  if (req && typeof req.get === 'function') {
+    return exportAssetUrlForRequest(req, BASE_PEACE_STYLESHEET_LOCAL);
   }
-  if (process.env.NODE_ENV === 'production') {
-    return BASE_PEACE_STYLESHEET_CDN;
-  }
-  return exportAssetUrlForRequest(req, BASE_PEACE_STYLESHEET_LOCAL);
+  return BASE_PEACE_STYLESHEET_CDN;
 }
 
 module.exports = {
