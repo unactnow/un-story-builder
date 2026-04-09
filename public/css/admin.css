@@ -706,3 +706,30 @@ textarea.wide {
 .title-meta a {
     color: var(--un-blue);
 }
+
+/* Quill 2 (same pattern as un-peace-dictionary) */
+.quill-field-group {
+    margin-bottom: 0.75rem;
+}
+.quill-wrap {
+    background: #fff;
+    border-radius: var(--radius);
+}
+.quill-wrap .ql-container {
+    font-family: var(--font-sans);
+    font-size: 1.125rem;
+    min-height: 120px;
+}
+.quill-wrap .ql-editor {
+    min-height: 120px;
+    font-size: 1.125rem !important;
+    font-family: var(--font-sans) !important;
+}
+.quill-wrap .ql-toolbar {
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
+}
+.quill-wrap .ql-container {
+    border-bottom-left-radius: var(--radius);
+    border-bottom-right-radius: var(--radius);
+}

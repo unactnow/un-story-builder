@@ -16,9 +16,10 @@ const {
   Timeline,
   TimelineEvent,
 } = require('../models');
+const youth = require('./youth-content');
 
 async function seed() {
-  await sequelize.sync();
+  await sequelize.sync({ alter: true });
 
   const existing = await User.findOne({ where: { role: 'admin' } });
   if (existing) {
@@ -48,86 +49,20 @@ async function seed() {
 
   const storyCount = await FeatureStory.count();
   if (storyCount === 0) {
-    const story = await FeatureStory.create({
-      title: 'Sample Photo Essay',
-      slug: 'sample-photo-essay',
-      status: 'draft',
-    });
-    const blocks = [
-      {
-        blockType: 'hero_image',
-        sortOrder: 0,
-        heading: 'Sample Photo Essay Title',
-        subheading: 'A demonstration of the block-based editor',
-        imageUrl: 'https://www.un.org/sites/un2.un.org/files/sample.jpg',
-        imageAlt: '',
-        imageCaption: '',
-      },
-      {
-        blockType: 'text_block',
-        sortOrder: 1,
-        heading: 'Introduction',
-        bodyText: 'This is a sample text block with a heading and body paragraph.',
-      },
-      {
-        blockType: 'quote_dark',
-        sortOrder: 2,
-        quoteText: 'The future belongs to those who believe in the beauty of their dreams.',
-        quoteSpeaker: 'Eleanor Roosevelt',
-        quoteSpeakerTitle: '',
-      },
-      {
-        blockType: 'full_image',
-        sortOrder: 3,
-        imageUrl: 'https://www.un.org/sites/un2.un.org/files/sample2.jpg',
-        imageAlt: 'Sample image',
-        imageCaption: '',
-      },
-    ];
-    for (const b of blocks) {
+    const story = await FeatureStory.create(youth.featureStory);
+    for (const b of youth.storyBlocks) {
       await StoryBlock.create({ ...b, storyId: story.id });
     }
-    console.log('Sample feature story seeded (Sample Photo Essay).');
+    console.log('Feature story seeded (Youth Have Always Moved History).');
   }
 
   const timelineCount = await Timeline.count();
   if (timelineCount === 0) {
-    const timeline = await Timeline.create({
-      title: 'Sample Timeline',
-      slug: 'sample-timeline',
-      description: 'A sample timeline for the editor.',
-      status: 'draft',
-    });
-    const evs = [
-      {
-        sortOrder: 0,
-        dateText: '2020',
-        dateISO: '2020-01-01',
-        location: '',
-        heading: 'First Event',
-        description: 'Description of the first event.',
-      },
-      {
-        sortOrder: 1,
-        dateText: '2022',
-        dateISO: '2022-06-15',
-        location: '',
-        heading: 'Second Event',
-        description: 'Description of the second event.',
-      },
-      {
-        sortOrder: 2,
-        dateText: '2024',
-        dateISO: '2024-03-01',
-        location: '',
-        heading: 'Third Event',
-        description: 'Description of the third event.',
-      },
-    ];
-    for (const e of evs) {
+    const timeline = await Timeline.create(youth.timeline);
+    for (const e of youth.timelineEvents) {
       await TimelineEvent.create({ ...e, timelineId: timeline.id });
     }
-    console.log('Sample timeline seeded (Sample Timeline).');
+    console.log('Timeline seeded (Youth Have Always Moved History).');
   }
 
   process.exit(0);

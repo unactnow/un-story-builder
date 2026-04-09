@@ -6,6 +6,7 @@ const {
 } = require('../models');
 const { ensureAuthenticated } = require('../middleware/auth');
 const { generateTimelineHTML } = require('../helpers/exportTimeline');
+const { sanitizeRichText } = require('../helpers/sanitizeRichText');
 
 const router = express.Router();
 
@@ -26,12 +27,12 @@ function eventFieldsFromBody(entry) {
   return {
     sortOrder: parseInt(entry.sortOrder, 10) || 0,
     dateText: entry.dateText != null ? String(entry.dateText) : '',
-    dateISO: entry.dateISO != null ? String(entry.dateISO) : '',
     location: entry.location != null ? String(entry.location) : '',
     heading,
-    description: entry.description != null ? String(entry.description) : '',
+    description: sanitizeRichText(entry.description != null ? String(entry.description) : ''),
     imageUrl: entry.imageUrl != null ? String(entry.imageUrl) : '',
     imageAlt: entry.imageAlt != null ? String(entry.imageAlt) : '',
+    imageCaption: entry.imageCaption != null ? String(entry.imageCaption) : '',
   };
 }
 
@@ -54,20 +55,18 @@ async function buildSnapshot(timeline) {
   });
   return JSON.stringify({
     title: timeline.title,
-    slug: timeline.slug,
     description: timeline.description || '',
-    status: timeline.status,
     events: events.map((ev) => {
       const e = ev.get({ plain: true });
       return {
         sortOrder: e.sortOrder,
         dateText: e.dateText || '',
-        dateISO: e.dateISO || '',
         location: e.location || '',
         heading: e.heading || '',
         description: e.description || '',
         imageUrl: e.imageUrl || '',
         imageAlt: e.imageAlt || '',
+        imageCaption: e.imageCaption || '',
       };
     }),
   });
@@ -82,12 +81,12 @@ router.get('/', ensureAuthenticated, async (req, res) => {
       return plain;
     })
   );
-  res.render('admin/timelines', { title: 'timelines', timelines });
+  res.render('admin/timelines', { title: 'Timelines', timelines });
 });
 
 router.get('/new', ensureAuthenticated, (req, res) => {
   res.render('admin/timeline-edit', {
-    title: 'new timeline',
+    title: 'New timeline',
     timeline: null,
     events: [],
     revisionCount: 0,
@@ -96,16 +95,13 @@ router.get('/new', ensureAuthenticated, (req, res) => {
 
 router.post('/new', ensureAuthenticated, async (req, res) => {
   try {
-    let slug = (req.body.slug || '').trim();
     const title = (req.body.title || '').trim();
     if (!title) {
       req.flash('error_msg', 'Title is required.');
       return res.redirect('/admin/timelines/new');
     }
-    if (!slug) slug = slugify(title);
-    const status = ['draft', 'published'].includes(req.body.status) ? req.body.status : 'draft';
-    const description = req.body.description != null ? String(req.body.description) : '';
-    const timeline = await Timeline.create({ title, slug, description, status });
+    const description = sanitizeRichText(req.body.description != null ? String(req.body.description) : '');
+    const timeline = await Timeline.create({ title, description });
     const eventData = parseEvents(req.body);
     for (let i = 0; i < eventData.length; i += 1) {
       const e = eventData[i];
@@ -115,11 +111,7 @@ router.post('/new', ensureAuthenticated, async (req, res) => {
     return res.redirect(`/admin/timelines/${timeline.id}/edit`);
   } catch (err) {
     console.error(err);
-    if (err.name === 'SequelizeUniqueConstraintError') {
-      req.flash('error_msg', 'Slug already exists.');
-    } else {
-      req.flash('error_msg', 'Failed to create timeline.');
-    }
+    req.flash('error_msg', 'Failed to create timeline.');
     return res.redirect('/admin/timelines/new');
   }
 });
@@ -136,7 +128,7 @@ router.get('/:id/edit', ensureAuthenticated, async (req, res) => {
   });
   const revisionCount = await TimelineRevision.count({ where: { timelineId: timeline.id } });
   res.render('admin/timeline-edit', {
-    title: 'edit timeline',
+    title: 'Edit timeline',
     timeline,
     events,
     revisionCount,
@@ -157,16 +149,13 @@ router.post('/:id/edit', ensureAuthenticated, async (req, res) => {
       revisedBy: req.user.username || '',
     });
 
-    let slug = (req.body.slug || '').trim();
     const title = (req.body.title || '').trim();
     if (!title) {
       req.flash('error_msg', 'Title is required.');
       return res.redirect(`/admin/timelines/${timeline.id}/edit`);
     }
-    if (!slug) slug = slugify(title);
-    const status = ['draft', 'published'].includes(req.body.status) ? req.body.status : 'draft';
-    const description = req.body.description != null ? String(req.body.description) : '';
-    await timeline.update({ title, slug, description, status });
+    const description = sanitizeRichText(req.body.description != null ? String(req.body.description) : '');
+    await timeline.update({ title, description });
 
     await TimelineEvent.destroy({ where: { timelineId: timeline.id } });
     const eventData = parseEvents(req.body);
@@ -207,7 +196,7 @@ router.get('/:id/export', ensureAuthenticated, async (req, res) => {
   });
   const htmlOutput = generateTimelineHTML(timeline, events);
   res.render('admin/timeline-export', {
-    title: 'export timeline',
+    title: 'Export timeline',
     timeline,
     htmlOutput,
     eventsCount: events.length,
@@ -225,7 +214,8 @@ router.get('/:id/export/download', ensureAuthenticated, async (req, res) => {
   });
   const htmlOutput = generateTimelineHTML(timeline, events);
   res.set('Content-Type', 'text/html');
-  res.set('Content-Disposition', `attachment; filename="${timeline.slug}-timeline.html"`);
+  const base = slugify(timeline.title || 'timeline') || 'timeline';
+  res.set('Content-Disposition', `attachment; filename="${base}-timeline.html"`);
   res.send(htmlOutput);
 });
 
@@ -239,7 +229,7 @@ router.get('/:id/revisions', ensureAuthenticated, async (req, res) => {
     where: { timelineId: timeline.id },
     order: [['createdAt', 'DESC']],
   });
-  res.render('admin/timeline-revisions', { title: 'revisions', timeline, revisions });
+  res.render('admin/timeline-revisions', { title: 'Revisions', timeline, revisions });
 });
 
 router.post('/:id/revisions/:revId/restore', ensureAuthenticated, async (req, res) => {
@@ -265,9 +255,7 @@ router.post('/:id/revisions/:revId/restore', ensureAuthenticated, async (req, re
     const data = JSON.parse(revision.snapshot);
     await timeline.update({
       title: data.title,
-      slug: data.slug,
-      description: data.description || '',
-      status: data.status,
+      description: sanitizeRichText(data.description || ''),
     });
     await TimelineEvent.destroy({ where: { timelineId: timeline.id } });
     if (Array.isArray(data.events)) {
@@ -277,12 +265,12 @@ router.post('/:id/revisions/:revId/restore', ensureAuthenticated, async (req, re
           timelineId: timeline.id,
           sortOrder: e.sortOrder != null ? e.sortOrder : i,
           dateText: e.dateText || '',
-          dateISO: e.dateISO || '',
           location: e.location || '',
           heading: e.heading || 'Event',
-          description: e.description || '',
+          description: sanitizeRichText(e.description || ''),
           imageUrl: e.imageUrl || '',
           imageAlt: e.imageAlt || '',
+          imageCaption: e.imageCaption || '',
         });
       }
     }

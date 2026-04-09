@@ -1,4 +1,5 @@
 <%- include('../partials/admin-head') %>
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
 
 <h2><%= timeline ? 'Edit timeline' : 'New timeline' %><% if (timeline && revisionCount > 0) { %> <span class="title-meta">(<a href="/admin/timelines/<%= timeline.id %>/revisions"><%= revisionCount %> revision<%= revisionCount !== 1 ? 's' : '' %></a>)</span><% } %></h2>
 
@@ -10,22 +11,9 @@
     <input type="text" id="title" name="title" required value="<%= timeline ? timeline.title : '' %>" class="wide">
   </div>
   <div class="form-row">
-    <label for="slug">Slug</label>
-    <input type="text" id="slug" name="slug" value="<%= timeline ? timeline.slug : '' %>" class="wide">
-    <span class="hint">Auto-generated from the title. Edit only if needed.</span>
-  </div>
-  <div class="form-row">
-    <label for="description">Description</label>
-    <textarea id="description" name="description" rows="3" class="wide"><%= timeline ? (timeline.description || '') : '' %></textarea>
+    <p><label>Description</label></p>
+    <%- include('./partials/wysiwyg-inner', { name: 'description', value: timeline ? (timeline.description || '') : '' }) %>
     <span class="hint">Subtitle shown in the timeline header when exported.</span>
-  </div>
-  <div class="form-row">
-    <label for="status">Status</label>
-    <select id="status" name="status">
-      <% var st = timeline ? timeline.status : 'draft'; %>
-      <option value="draft" <%= st === 'draft' ? 'selected' : '' %>>draft</option>
-      <option value="published" <%= st === 'published' ? 'selected' : '' %>>published</option>
-    </select>
   </div>
 
   <div class="btn-row">
@@ -43,7 +31,7 @@
     <% }); %>
   </div>
 
-  <p><button type="button" class="btn btn-outline" id="btn-add-event">Add Event</button></p>
+  <p><button type="button" class="btn btn-outline" id="btn-add-event">Add event</button></p>
 
   <p class="hint">Image URLs show a thumbnail below each field when valid.</p>
 </form>
@@ -55,29 +43,14 @@
 <% } %>
 
 <template id="tpl-timeline-event">
-<%- include('./partials/timeline-event-tpl', { event: { dateText: '', dateISO: '', location: '', heading: '', description: '', imageUrl: '', imageAlt: '' } }) %>
+<%- include('./partials/timeline-event-tpl', { event: { dateText: '', location: '', heading: '', description: '', imageUrl: '', imageAlt: '', imageCaption: '' } }) %>
 </template>
 
 <script src="/js/drag-reorder.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script src="/js/quill-admin.js"></script>
 <script>
 (function () {
-  var slugManuallyEdited = false;
-  var titleEl = document.getElementById('title');
-  var slugEl = document.getElementById('slug');
-  if (titleEl && slugEl) {
-    titleEl.addEventListener('input', function () {
-      if (slugManuallyEdited) return;
-      slugEl.value = titleEl.value
-        .toLowerCase()
-        .trim()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/[\s_]+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-    });
-    slugEl.addEventListener('input', function () { slugManuallyEdited = true; });
-  }
-
   function reindexTimelineEvents() {
     var list = document.getElementById('event-list');
     if (!list) return;
@@ -182,6 +155,7 @@
     list.appendChild(card);
     wireEventCard(card);
     reindexTimelineEvents();
+    if (window.quillAdmin) window.quillAdmin.initRoots(card);
   });
 
   <% if (timeline) { %>

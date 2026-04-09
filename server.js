@@ -120,7 +120,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-sequelize.sync()
+sequelize.sync({ alter: true })
   .then(() => console.log('Database connected and synced'))
   .catch((err) => console.error('Database connection error:', err.message));
 

@@ -3,6 +3,7 @@ const path = require('path');
 
 const photoEssayCss = fs.readFileSync(path.join(__dirname, 'static', 'photo-essay.css'), 'utf8');
 const photoEssayJs = fs.readFileSync(path.join(__dirname, 'static', 'photo-essay.js'), 'utf8');
+const { sanitizeRichText, isStoredRichHtml } = require('./sanitizeRichText');
 
 function escapeHtml(text) {
   if (text == null || text === '') return '';
@@ -34,13 +35,49 @@ function figcaptionHtml(caption) {
   return `<figcaption>${escapeHtml(String(caption).trim())}</figcaption>`;
 }
 
+function overlayBodyHtml(bodyText, revealClass) {
+  const t = String(bodyText || '').trim();
+  if (!t) return '';
+  if (isStoredRichHtml(bodyText)) {
+    return `\t\t<div class="pe-rich ${revealClass}">${sanitizeRichText(bodyText)}</div>`;
+  }
+  return `\t\t<p class="${revealClass}">${escapeHtml(t)}</p>`;
+}
+
+function splitBodyHtml(bodyText, pClass) {
+  if (!String(bodyText || '').trim()) return '';
+  if (isStoredRichHtml(bodyText)) {
+    return `\t\t<div class="pe-rich">${sanitizeRichText(bodyText)}</div>`;
+  }
+  return splitParagraphs(bodyText).map(
+    (seg) => `\t\t<p class="${pClass}">${escapeHtml(seg)}</p>`
+  ).join('\n');
+}
+
+function textBlockBodyHtml(bodyText) {
+  if (!String(bodyText || '').trim()) return '';
+  if (isStoredRichHtml(bodyText)) {
+    return `\t\t<div class="pe-rich">${sanitizeRichText(bodyText)}</div>`;
+  }
+  return splitParagraphs(bodyText).map(
+    (seg) => `\t\t<p class="pe-reveal pe-reveal-up">${escapeHtml(seg)}</p>`
+  ).join('\n');
+}
+
+function quoteBodyHtml(raw) {
+  if (!String(raw || '').trim()) return '';
+  if (isStoredRichHtml(raw)) {
+    return `\t\t<div class="pe-rich pe-quote-body">${sanitizeRichText(raw)}</div>`;
+  }
+  return `\t\t<p>${escapeHtml(raw)}</p>`;
+}
+
 function renderBlock(block, index) {
   const b = block.get ? block.get({ plain: true }) : block;
   const type = b.blockType;
   const heading = escapeHtml(b.heading || '');
   const subheading = escapeHtml(b.subheading || '');
   const bodyText = b.bodyText || '';
-  const quoteText = escapeHtml(b.quoteText || '');
   const quoteSpeaker = escapeHtml(b.quoteSpeaker || '');
   const quoteSpeakerTitle = escapeHtml(b.quoteSpeakerTitle || '');
   const imageAlt = escapeHtml(b.imageAlt || '');
@@ -103,7 +140,7 @@ ${scroll ? scroll + '\n' : ''}</div>`;
   }
 
   if (type === 'full_image_overlay_left') {
-    const pBody = `<p class="pe-reveal pe-reveal-left">${escapeHtml(bodyText.trim())}</p>`;
+    const pBody = overlayBodyHtml(bodyText, 'pe-reveal pe-reveal-left');
     const fig = figcaptionHtml(imageCaption);
     return `<figure class="pe-full-image-overlay">
 \t<img src="${escapeHtml(imgSrc)}" alt="${imageAlt}" loading="lazy" decoding="async">
@@ -116,7 +153,7 @@ ${scroll ? scroll + '\n' : ''}</div>`;
   }
 
   if (type === 'full_image_overlay_center') {
-    const pBody = `<p class="pe-reveal pe-reveal-up">${escapeHtml(bodyText.trim())}</p>`;
+    const pBody = overlayBodyHtml(bodyText, 'pe-reveal pe-reveal-up');
     const fig = figcaptionHtml(imageCaption);
     return `<figure class="pe-full-image-overlay">
 \t<img src="${escapeHtml(imgSrc)}" alt="${imageAlt}" loading="lazy" decoding="async">
@@ -129,7 +166,7 @@ ${scroll ? scroll + '\n' : ''}</div>`;
   }
 
   if (type === 'full_image_overlay_right') {
-    const pBody = `<p class="pe-reveal pe-reveal-right">${escapeHtml(bodyText.trim())}</p>`;
+    const pBody = overlayBodyHtml(bodyText, 'pe-reveal pe-reveal-right');
     const fig = figcaptionHtml(imageCaption);
     return `<figure class="pe-full-image-overlay">
 \t<img src="${escapeHtml(imgSrc)}" alt="${imageAlt}" loading="lazy" decoding="async">
@@ -156,9 +193,7 @@ ${scroll ? scroll + '\n' : ''}</div>`;
     const innerFig = (imageCaption && String(imageCaption).trim())
       ? `\t\t<figcaption>${escapeHtml(String(imageCaption).trim())}</figcaption>`
       : '';
-    const paras = splitParagraphs(bodyText).map(
-      (seg) => `\t\t<p class="pe-reveal pe-reveal-right">${escapeHtml(seg)}</p>`
-    ).join('\n');
+    const paras = splitBodyHtml(bodyText, 'pe-reveal pe-reveal-right');
     return `<div class="pe-split">
 \t<figure class="pe-split-image pe-reveal pe-reveal-left pe-draw-corner">
 \t\t<img src="${escapeHtml(imgSrc)}" alt="${imageAlt}" loading="lazy" decoding="async">
@@ -174,9 +209,7 @@ ${paras}
     const innerFig = (imageCaption && String(imageCaption).trim())
       ? `\t\t<figcaption>${escapeHtml(String(imageCaption).trim())}</figcaption>`
       : '';
-    const paras = splitParagraphs(bodyText).map(
-      (seg) => `\t\t<p class="pe-reveal pe-reveal-left">${escapeHtml(seg)}</p>`
-    ).join('\n');
+    const paras = splitBodyHtml(bodyText, 'pe-reveal pe-reveal-left');
     return `<div class="pe-split pe-img-right">
 \t<figure class="pe-split-image pe-reveal pe-reveal-right pe-draw-corner">
 \t\t<img src="${escapeHtml(imgSrc)}" alt="${imageAlt}" loading="lazy" decoding="async">
@@ -189,9 +222,7 @@ ${paras}
   }
 
   if (type === 'text_block') {
-    const paras = splitParagraphs(bodyText).map(
-      (seg) => `\t\t<p class="pe-reveal pe-reveal-up">${escapeHtml(seg)}</p>`
-    ).join('\n');
+    const paras = textBlockBodyHtml(bodyText);
     return `<div class="pe-text-block">
 \t<div class="pe-text-block-inner pe-stagger">
 \t\t<h2 class="pe-reveal pe-reveal-up">${heading}</h2>
@@ -201,9 +232,7 @@ ${paras}
   }
 
   if (type === 'text_body') {
-    const paras = splitParagraphs(bodyText).map(
-      (seg) => `\t\t<p class="pe-reveal pe-reveal-up">${escapeHtml(seg)}</p>`
-    ).join('\n');
+    const paras = textBlockBodyHtml(bodyText);
     return `<div class="pe-text-body">
 \t<div class="pe-text-body-inner pe-stagger">
 ${paras}
@@ -212,18 +241,20 @@ ${paras}
   }
 
   if (type === 'quote_dark') {
+    const qInner = quoteBodyHtml(b.quoteText || '');
     return `<div class="pe-quote-dark">
 \t<blockquote class="pe-reveal pe-reveal-scale">
-\t\t<p>${quoteText}</p>
+${qInner}
 \t\t<cite>${quoteSpeaker}<span>${quoteSpeakerTitle}</span></cite>
 \t</blockquote>
 </div>`;
   }
 
   if (type === 'quote_light') {
+    const qInner = quoteBodyHtml(b.quoteText || '');
     return `<div class="pe-quote-light">
 \t<blockquote class="pe-reveal pe-reveal-scale">
-\t\t<p>${quoteText}</p>
+${qInner}
 \t\t<cite>${quoteSpeaker}<span>${quoteSpeakerTitle}</span></cite>
 \t</blockquote>
 </div>`;

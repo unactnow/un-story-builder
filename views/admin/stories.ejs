@@ -2,15 +2,14 @@
 
 <h2>Feature stories</h2>
 <p>Total: <%= stories.length %> stor<%= stories.length !== 1 ? 'ies' : 'y' %></p>
-<p><a href="/admin/stories/new" class="btn">Create New Story</a></p>
+<p><a href="/admin/stories/new" class="btn">Create new story</a></p>
 
 <table class="admin-table">
   <thead>
     <tr>
       <th>Title</th>
-      <th>Status</th>
       <th>Blocks</th>
-      <th>Last Updated</th>
+      <th>Last updated</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -18,7 +17,6 @@
     <% stories.forEach(function(s) { %>
     <tr>
       <td><a href="/admin/stories/<%= s.id %>/edit"><%= s.title %></a></td>
-      <td><span class="badge <%= s.status === 'published' ? 'badge-published' : 'badge-draft' %>"><%= s.status %></span></td>
       <td><%= typeof s.blocksCount !== 'undefined' ? s.blocksCount : '—' %></td>
       <td><%= s.updatedAt ? new Date(s.updatedAt).toLocaleString() : '—' %></td>
       <td>

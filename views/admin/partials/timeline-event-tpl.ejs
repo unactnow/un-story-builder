@@ -13,12 +13,13 @@
   <div class="event-card-body">
     <input type="hidden" name="events[__INDEX__][sortOrder]" class="sort-order-input" value="__INDEX__">
     <% if (e.id) { %><input type="hidden" name="events[__INDEX__][id]" value="<%= e.id %>"><% } %>
-    <p><label>Display Date<br><input type="text" name="events[__INDEX__][dateText]" value="<%= e.dateText || '' %>" class="wide" placeholder="e.g. 1960"></label></p>
-    <p><label>ISO Date (for sorting)<br><input type="text" name="events[__INDEX__][dateISO]" value="<%= e.dateISO || '' %>" class="wide" placeholder="e.g. 1960-02-01"></label></p>
+    <p><label>Date<br><input type="text" name="events[__INDEX__][dateText]" value="<%= e.dateText || '' %>" class="wide"></label></p>
     <p><label>Location<br><input type="text" name="events[__INDEX__][location]" value="<%= e.location || '' %>" class="wide"></label></p>
-    <p><label>Event Title *<br><input type="text" name="events[__INDEX__][heading]" value="<%= e.heading || '' %>" class="wide"></label></p>
-    <p><label>Event Description<br><textarea name="events[__INDEX__][description]" rows="5" class="wide"><%= e.description || '' %></textarea></label></p>
+    <p><label>Event title *<br><input type="text" name="events[__INDEX__][heading]" value="<%= e.heading || '' %>" class="wide"></label></p>
+    <p><label>Event description</label></p>
+    <%- include('./wysiwyg-inner', { name: 'events[__INDEX__][description]', value: e.description }) %>
     <p><label>Image URL (optional)<br><input type="text" name="events[__INDEX__][imageUrl]" value="<%= e.imageUrl || '' %>" class="wide img-url"></label></p>
-    <p><label>Image Alt Text<br><input type="text" name="events[__INDEX__][imageAlt]" value="<%= e.imageAlt || '' %>" class="wide"></label></p>
+    <p><label>Image alt text<br><input type="text" name="events[__INDEX__][imageAlt]" value="<%= e.imageAlt || '' %>" class="wide"></label></p>
+    <p><label>Image caption<br><input type="text" name="events[__INDEX__][imageCaption]" value="<%= e.imageCaption || '' %>" class="wide"></label></p>
   </div>
 </div>

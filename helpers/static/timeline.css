@@ -67,6 +67,31 @@ body.node-type-article .article-body .tl-block .tl-header h2 {
 	width: auto !important;
 }
 
+.tl-header .tl-rich p {
+	font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 24px;
+	line-height: 1.65;
+	font-weight: 300;
+	color: #444;
+	margin: 0 0 1em 0 !important;
+	width: auto !important;
+}
+.tl-header .tl-rich p:last-child {
+	margin-bottom: 0 !important;
+}
+.tl-header .tl-rich a {
+	color: #009edb;
+	text-decoration: underline;
+}
+.tl-header .tl-rich ul,
+.tl-header .tl-rich ol {
+	margin: 0 0 1em 0 !important;
+	padding-left: 1.35em;
+}
+.tl-header .tl-rich li {
+	margin: 0.15em 0;
+}
+
 .tl-list {
 	list-style: none !important;
 	counter-reset: none;
@@ -231,15 +256,68 @@ body.node-type-article .article-body .tl-block .tl-header h2 {
 	width: auto !important;
 }
 
-.tl-card.tl-has-img img {
+.tl-rich p {
+	font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 22px;
+	line-height: 1.6;
+	font-weight: 300;
+	color: #444;
+	margin: 0 0 1em 0 !important;
+	width: auto !important;
+}
+.tl-rich p:last-child {
+	margin-bottom: 0 !important;
+}
+.tl-rich a {
+	color: #009edb;
+	text-decoration: underline;
+}
+.tl-rich ul,
+.tl-rich ol {
+	margin: 0 0 1em 0 !important;
+	padding-left: 1.35em;
+}
+.tl-rich li {
+	margin: 0.15em 0;
+}
+
+.tl-card.tl-has-img > img,
+.tl-card.tl-has-img .tl-figure {
 	order: 1;
 	margin-top: 12px !important;
+}
+
+.tl-card .tl-figure {
+	margin: 0;
+	padding: 0;
+	width: 100%;
 }
 
 .tl-card img {
 	width: 100%;
 	display: block;
 	margin: 0 !important;
+}
+
+.tl-img-caption {
+	font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 16px;
+	line-height: 1.45;
+	font-weight: 300;
+	color: #666;
+	margin: 8px 0 0 0;
+	padding: 0;
+	width: 100%;
+	display: block;
+}
+
+/* Left column: caption flush toward outer (left) edge; right column: toward outer (right) edge */
+.tl-item:nth-child(odd) .tl-img-caption {
+	text-align: left;
+}
+
+.tl-item:nth-child(even) .tl-img-caption {
+	text-align: right;
 }
 
 .tl-item.tl-hidden {
@@ -321,9 +399,14 @@ body.node-type-article .article-body .tl-block .tl-header h2 {
 		margin-left: 0;
 	}
 
-	.tl-card.tl-has-img img {
+	.tl-card.tl-has-img > img,
+	.tl-card.tl-has-img .tl-figure {
 		order: 0;
 		margin: 8px 0 12px 0 !important;
+	}
+
+	.tl-img-caption {
+		text-align: left !important;
 	}
 
 	.tl-card time {

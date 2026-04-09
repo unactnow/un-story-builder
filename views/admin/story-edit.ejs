@@ -1,6 +1,7 @@
 <%- include('../partials/admin-head') %>
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
 
-<% var _labels = { hero_image: 'Hero: Image', hero_video: 'Hero: Video', full_image: 'Full-Screen Image', full_image_overlay_left: 'Image + Overlay (Left)', full_image_overlay_center: 'Image + Overlay (Center)', full_image_overlay_right: 'Image + Overlay (Right)', full_image_subtitle: 'Image + Statement Subtitle', split_image_left: 'Split: Image Left, Text Right', split_image_right: 'Split: Image Right, Text Left', text_block: 'Text Block (Heading + Body)', text_body: 'Text Block (Body Only)', quote_dark: 'Quote (Dark / Blue)', quote_light: 'Quote (Light / White)', divider: 'Divider' }; %>
+<% var _labels = { hero_image: 'Hero: image', hero_video: 'Hero: video', full_image: 'Full-screen image', full_image_overlay_left: 'Image + overlay (left)', full_image_overlay_center: 'Image + overlay (center)', full_image_overlay_right: 'Image + overlay (right)', full_image_subtitle: 'Image + statement subtitle', split_image_left: 'Split: image left, text right', split_image_right: 'Split: image right, text left', text_block: 'Text block (heading + body)', text_body: 'Text block (body only)', quote_dark: 'Quote (dark / blue)', quote_light: 'Quote (light / white)', divider: 'Divider' }; %>
 <% var _blockTypes = ['hero_image','hero_video','full_image','full_image_overlay_left','full_image_overlay_center','full_image_overlay_right','full_image_subtitle','split_image_left','split_image_right','text_block','text_body','quote_dark','quote_light','divider']; %>
 <% var _empty = { heading: '', subheading: '', bodyText: '', quoteText: '', quoteSpeaker: '', quoteSpeakerTitle: '', imageUrl: '', imageAlt: '', imageCaption: '', videoUrl: '' }; %>
 
@@ -12,19 +13,6 @@
   <div class="form-row">
     <label for="title">Title *</label>
     <input type="text" id="title" name="title" required value="<%= story ? story.title : '' %>" class="wide">
-  </div>
-  <div class="form-row">
-    <label for="slug">Slug</label>
-    <input type="text" id="slug" name="slug" value="<%= story ? story.slug : '' %>" class="wide">
-    <span class="hint">Auto-generated from the title. Edit only if needed.</span>
-  </div>
-  <div class="form-row">
-    <label for="status">Status</label>
-    <select id="status" name="status">
-      <% var st = story ? story.status : 'draft'; %>
-      <option value="draft" <%= st === 'draft' ? 'selected' : '' %>>draft</option>
-      <option value="published" <%= st === 'published' ? 'selected' : '' %>>published</option>
-    </select>
   </div>
 
   <div class="btn-row">
@@ -49,7 +37,7 @@
       <option value="<%= bt %>"><%= _labels[bt] %></option>
       <% }); %>
     </select>
-    <button type="button" class="btn btn-outline" id="btn-add-block">Add Block</button>
+    <button type="button" class="btn btn-outline" id="btn-add-block">Add block</button>
   </div>
 
   <p class="hint">Preview by exporting and opening the generated HTML. Image URLs show a thumbnail below each field when valid.</p>
@@ -68,25 +56,10 @@
 <% }); %>
 
 <script src="/js/drag-reorder.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script src="/js/quill-admin.js"></script>
 <script>
 (function () {
-  var slugManuallyEdited = false;
-  var titleEl = document.getElementById('title');
-  var slugEl = document.getElementById('slug');
-  if (titleEl && slugEl) {
-    titleEl.addEventListener('input', function () {
-      if (slugManuallyEdited) return;
-      slugEl.value = titleEl.value
-        .toLowerCase()
-        .trim()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/[\s_]+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-    });
-    slugEl.addEventListener('input', function () { slugManuallyEdited = true; });
-  }
-
   function reindexStoryBlocks() {
     var list = document.getElementById('block-list');
     if (!list) return;
@@ -200,6 +173,7 @@
     list.appendChild(card);
     wireBlockCard(card);
     reindexStoryBlocks();
+    if (window.quillAdmin) window.quillAdmin.initRoots(card);
   });
 
   <% if (story) { %>

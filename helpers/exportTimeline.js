@@ -3,6 +3,8 @@ const path = require('path');
 
 const timelineCss = fs.readFileSync(path.join(__dirname, 'static', 'timeline.css'), 'utf8');
 const timelineJs = fs.readFileSync(path.join(__dirname, 'static', 'timeline.js'), 'utf8');
+const { parseDisplayDateToISO } = require('./parseDisplayDate');
+const { sanitizeRichText, isStoredRichHtml } = require('./sanitizeRichText');
 
 function escapeHtml(text) {
   if (text == null || text === '') return '';
@@ -25,9 +27,12 @@ function generateTimelineHTML(timeline, events) {
   const t = timeline.get ? timeline.get({ plain: true }) : timeline;
   const title = escapeHtml(t.title || '');
   const description = t.description ? String(t.description).trim() : '';
-  const descP = description
-    ? `\t<p>${escapeHtml(description)}</p>\n`
-    : '';
+  let descP = '';
+  if (description) {
+    descP = isStoredRichHtml(description)
+      ? `\t<div class="tl-rich">${sanitizeRichText(description)}</div>\n`
+      : `\t<p>${escapeHtml(description)}</p>\n`;
+  }
 
   const sorted = [...events].sort((a, b) => {
     const ao = a.sortOrder != null ? a.sortOrder : 0;
@@ -46,23 +51,36 @@ ${descP}</div>`;
   sorted.forEach((ev) => {
     const e = ev.get ? ev.get({ plain: true }) : ev;
     const dateText = escapeHtml(e.dateText || '');
-    const dateISO = (e.dateISO && String(e.dateISO).trim()) ? String(e.dateISO).trim() : '';
+    const dateISO = parseDisplayDateToISO(e.dateText || '');
     const loc = (e.location && String(e.location).trim())
       ? `\t\t<span class="tl-location">${escapeHtml(String(e.location).trim())}</span>\n`
       : '';
     const head = escapeHtml(e.heading || '');
-    const desc = escapeHtml(e.description || '');
+    const descRaw = e.description || '';
+    const desc = isStoredRichHtml(descRaw)
+      ? sanitizeRichText(descRaw)
+      : escapeHtml(String(descRaw).trim());
     const imgUrl = safeUrl(e.imageUrl);
     const imgAlt = escapeHtml(e.imageAlt || '');
     const hasImg = !!imgUrl;
+    const capRaw = e.imageCaption != null ? String(e.imageCaption).trim() : '';
+    const capForHtml = capRaw
+      ? capRaw.split(/\n/).map((line) => escapeHtml(line)).join('<br>')
+      : '';
 
     const timeTag = dateISO
       ? `<time datetime="${escapeHtml(dateISO)}" itemprop="startDate">${dateText}</time>`
       : `<time itemprop="startDate">${dateText}</time>`;
 
-    const imgBlock = hasImg
-      ? `\t\t<img src="${escapeHtml(imgUrl)}" alt="${imgAlt}" loading="lazy" decoding="async">`
-      : '';
+    let imgBlock = '';
+    if (hasImg) {
+      const imgTag = `\t\t<img src="${escapeHtml(imgUrl)}" alt="${imgAlt}" loading="lazy" decoding="async">`;
+      if (capForHtml) {
+        imgBlock = `\t\t<figure class="tl-figure">\n${imgTag}\n\t\t<figcaption class="tl-img-caption">${capForHtml}</figcaption>\n\t\t</figure>`;
+      } else {
+        imgBlock = imgTag;
+      }
+    }
 
     const cardClass = hasImg ? 'tl-card tl-has-img' : 'tl-card';
 
@@ -71,7 +89,7 @@ ${descP}</div>`;
 \t<div class="${cardClass}">
 \t\t${timeTag}
 ${loc}\t\t<h3 itemprop="name">${head}</h3>
-\t\t<p itemprop="description">${desc}</p>
+\t\t${isStoredRichHtml(descRaw) ? `<div class="tl-rich" itemprop="description">${desc}</div>` : `<p itemprop="description">${desc}</p>`}
 ${hasImg ? imgBlock + '\n' : ''}\t</div>
 </li>
 `;

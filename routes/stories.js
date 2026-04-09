@@ -6,6 +6,7 @@ const {
 } = require('../models');
 const { ensureAuthenticated } = require('../middleware/auth');
 const { generateStoryHTML } = require('../helpers/exportStory');
+const { sanitizeRichText } = require('../helpers/sanitizeRichText');
 
 const router = express.Router();
 
@@ -26,8 +27,8 @@ function blockFieldsFromBody(entry) {
     sortOrder: parseInt(entry.sortOrder, 10) || 0,
     heading: entry.heading != null ? String(entry.heading) : '',
     subheading: entry.subheading != null ? String(entry.subheading) : '',
-    bodyText: entry.bodyText != null ? String(entry.bodyText) : '',
-    quoteText: entry.quoteText != null ? String(entry.quoteText) : '',
+    bodyText: sanitizeRichText(entry.bodyText != null ? String(entry.bodyText) : ''),
+    quoteText: sanitizeRichText(entry.quoteText != null ? String(entry.quoteText) : ''),
     quoteSpeaker: entry.quoteSpeaker != null ? String(entry.quoteSpeaker) : '',
     quoteSpeakerTitle: entry.quoteSpeakerTitle != null ? String(entry.quoteSpeakerTitle) : '',
     imageUrl: entry.imageUrl != null ? String(entry.imageUrl) : '',
@@ -56,8 +57,6 @@ async function buildSnapshot(story) {
   });
   return JSON.stringify({
     title: story.title,
-    slug: story.slug,
-    status: story.status,
     blocks: blocks.map((bl) => {
       const b = bl.get({ plain: true });
       return {
@@ -87,12 +86,12 @@ router.get('/', ensureAuthenticated, async (req, res) => {
       return plain;
     })
   );
-  res.render('admin/stories', { title: 'feature stories', stories });
+  res.render('admin/stories', { title: 'Feature stories', stories });
 });
 
 router.get('/new', ensureAuthenticated, (req, res) => {
   res.render('admin/story-edit', {
-    title: 'new story',
+    title: 'New story',
     story: null,
     blocks: [],
     revisionCount: 0,
@@ -101,15 +100,12 @@ router.get('/new', ensureAuthenticated, (req, res) => {
 
 router.post('/new', ensureAuthenticated, async (req, res) => {
   try {
-    let slug = (req.body.slug || '').trim();
     const title = (req.body.title || '').trim();
     if (!title) {
       req.flash('error_msg', 'Title is required.');
       return res.redirect('/admin/stories/new');
     }
-    if (!slug) slug = slugify(title);
-    const status = ['draft', 'published'].includes(req.body.status) ? req.body.status : 'draft';
-    const story = await FeatureStory.create({ title, slug, status });
+    const story = await FeatureStory.create({ title });
     const blockData = parseBlocks(req.body);
     for (let i = 0; i < blockData.length; i += 1) {
       const b = blockData[i];
@@ -119,11 +115,7 @@ router.post('/new', ensureAuthenticated, async (req, res) => {
     return res.redirect(`/admin/stories/${story.id}/edit`);
   } catch (err) {
     console.error(err);
-    if (err.name === 'SequelizeUniqueConstraintError') {
-      req.flash('error_msg', 'Slug already exists.');
-    } else {
-      req.flash('error_msg', 'Failed to create story.');
-    }
+    req.flash('error_msg', 'Failed to create story.');
     return res.redirect('/admin/stories/new');
   }
 });
@@ -140,7 +132,7 @@ router.get('/:id/edit', ensureAuthenticated, async (req, res) => {
   });
   const revisionCount = await StoryRevision.count({ where: { storyId: story.id } });
   res.render('admin/story-edit', {
-    title: 'edit story',
+    title: 'Edit story',
     story,
     blocks,
     revisionCount,
@@ -161,15 +153,12 @@ router.post('/:id/edit', ensureAuthenticated, async (req, res) => {
       revisedBy: req.user.username || '',
     });
 
-    let slug = (req.body.slug || '').trim();
     const title = (req.body.title || '').trim();
     if (!title) {
       req.flash('error_msg', 'Title is required.');
       return res.redirect(`/admin/stories/${story.id}/edit`);
     }
-    if (!slug) slug = slugify(title);
-    const status = ['draft', 'published'].includes(req.body.status) ? req.body.status : 'draft';
-    await story.update({ title, slug, status });
+    await story.update({ title });
 
     await StoryBlock.destroy({ where: { storyId: story.id } });
     const blockData = parseBlocks(req.body);
@@ -210,7 +199,7 @@ router.get('/:id/export', ensureAuthenticated, async (req, res) => {
   });
   const htmlOutput = generateStoryHTML(story, blocks);
   res.render('admin/story-export', {
-    title: 'export story',
+    title: 'Export story',
     story,
     htmlOutput,
     blocksCount: blocks.length,
@@ -228,7 +217,8 @@ router.get('/:id/export/download', ensureAuthenticated, async (req, res) => {
   });
   const htmlOutput = generateStoryHTML(story, blocks);
   res.set('Content-Type', 'text/html');
-  res.set('Content-Disposition', `attachment; filename="${story.slug}.html"`);
+  const base = slugify(story.title || 'story') || 'story';
+  res.set('Content-Disposition', `attachment; filename="${base}.html"`);
   res.send(htmlOutput);
 });
 
@@ -242,7 +232,7 @@ router.get('/:id/revisions', ensureAuthenticated, async (req, res) => {
     where: { storyId: story.id },
     order: [['createdAt', 'DESC']],
   });
-  res.render('admin/story-revisions', { title: 'revisions', story, revisions });
+  res.render('admin/story-revisions', { title: 'Revisions', story, revisions });
 });
 
 router.post('/:id/revisions/:revId/restore', ensureAuthenticated, async (req, res) => {
@@ -268,8 +258,6 @@ router.post('/:id/revisions/:revId/restore', ensureAuthenticated, async (req, re
     const data = JSON.parse(revision.snapshot);
     await story.update({
       title: data.title,
-      slug: data.slug,
-      status: data.status,
     });
     await StoryBlock.destroy({ where: { storyId: story.id } });
     if (Array.isArray(data.blocks)) {
@@ -281,8 +269,8 @@ router.post('/:id/revisions/:revId/restore', ensureAuthenticated, async (req, re
           sortOrder: b.sortOrder != null ? b.sortOrder : i,
           heading: b.heading || '',
           subheading: b.subheading || '',
-          bodyText: b.bodyText || '',
-          quoteText: b.quoteText || '',
+          bodyText: sanitizeRichText(b.bodyText || ''),
+          quoteText: sanitizeRichText(b.quoteText || ''),
           quoteSpeaker: b.quoteSpeaker || '',
           quoteSpeakerTitle: b.quoteSpeakerTitle || '',
           imageUrl: b.imageUrl || '',

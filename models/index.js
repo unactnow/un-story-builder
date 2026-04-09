@@ -83,8 +83,6 @@ const Setting = sequelize.define('Setting', {
 const FeatureStory = sequelize.define('FeatureStory', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   title: { type: DataTypes.STRING, allowNull: false },
-  slug: { type: DataTypes.STRING, allowNull: false, unique: true },
-  status: { type: DataTypes.ENUM('draft', 'published'), defaultValue: 'draft' },
 }, { tableName: 'feature_stories', timestamps: true });
 
 const StoryBlock = sequelize.define('StoryBlock', {
@@ -124,21 +122,19 @@ const StoryBlock = sequelize.define('StoryBlock', {
 const Timeline = sequelize.define('Timeline', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   title: { type: DataTypes.STRING, allowNull: false },
-  slug: { type: DataTypes.STRING, allowNull: false, unique: true },
   description: { type: DataTypes.TEXT, defaultValue: '' },
-  status: { type: DataTypes.ENUM('draft', 'published'), defaultValue: 'draft' },
 }, { tableName: 'timelines', timestamps: true });
 
 const TimelineEvent = sequelize.define('TimelineEvent', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   sortOrder: { type: DataTypes.INTEGER, defaultValue: 0 },
   dateText: { type: DataTypes.STRING, allowNull: false },
-  dateISO: { type: DataTypes.STRING, defaultValue: '' },
   location: { type: DataTypes.STRING, defaultValue: '' },
   heading: { type: DataTypes.STRING, allowNull: false },
   description: { type: DataTypes.TEXT, defaultValue: '' },
   imageUrl: { type: DataTypes.TEXT, defaultValue: '' },
   imageAlt: { type: DataTypes.STRING, defaultValue: '' },
+  imageCaption: { type: DataTypes.TEXT, defaultValue: '' },
 }, { tableName: 'timeline_events', timestamps: true });
 
 const StoryRevision = sequelize.define('StoryRevision', {

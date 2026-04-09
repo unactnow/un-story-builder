@@ -4,13 +4,13 @@
 <p><%= typeof blocksCount !== 'undefined' ? blocksCount : 0 %> blocks · Exported <%= new Date().toISOString() %></p>
 
 <div class="btn-row">
-  <button type="button" class="btn" id="btn-copy-export">Copy to Clipboard</button>
+  <button type="button" class="btn" id="btn-copy-export">Copy to clipboard</button>
   <a href="/admin/stories/<%= story.id %>/export/download" class="btn btn-outline">Download HTML</a>
 </div>
 
 <pre class="export-pre"><code><%= htmlOutput %></code></pre>
 
-<p><a href="/admin/stories/<%= story.id %>/edit">Back to Edit</a></p>
+<p><a href="/admin/stories/<%= story.id %>/edit">Back to edit</a></p>
 
 <script>
 var rawHtml = <%- JSON.stringify(htmlOutput) %>;

@@ -1064,3 +1064,79 @@ body.node-type-article .pe-essay .pe-text-body-inner p {
 	}
 
 }
+
+/* CMS rich text (.pe-rich): paragraphs, bold, italic, links */
+.pe-text-block-inner .pe-rich p,
+.pe-text-body-inner .pe-rich p,
+.pe-split-text .pe-rich p {
+	font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 22px;
+	line-height: 1.6;
+	font-weight: 300;
+	color: #444;
+	margin: 0 0 1em 0;
+	width: auto !important;
+}
+.pe-text-block-inner .pe-rich p:last-child,
+.pe-text-body-inner .pe-rich p:last-child,
+.pe-split-text .pe-rich p:last-child {
+	margin-bottom: 0;
+}
+.pe-text-block-inner .pe-rich a,
+.pe-text-body-inner .pe-rich a,
+.pe-split-text .pe-rich a {
+	color: #009edb;
+	text-decoration: underline;
+}
+
+.pe-full-image-overlay .pe-img-overlay .pe-rich p {
+	font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 28px;
+	line-height: 1.55;
+	font-weight: 300;
+	color: rgba(255,255,255,0.95) !important;
+	margin: 0 0 0.75em 0;
+}
+.pe-full-image-overlay .pe-img-overlay .pe-rich p:last-child {
+	margin-bottom: 0;
+}
+.pe-full-image-overlay .pe-img-overlay .pe-rich a {
+	color: #fff;
+	text-decoration: underline;
+}
+
+.pe-quote-dark blockquote .pe-rich p,
+.pe-quote-light blockquote .pe-rich p {
+	font-family: "Roboto Condensed", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-style: normal;
+	font-weight: 700;
+	font-size: 48px;
+	line-height: 1.25;
+	margin: 0 0 24px 0;
+}
+.pe-quote-dark blockquote .pe-rich p {
+	color: #fff !important;
+}
+.pe-quote-light blockquote .pe-rich p {
+	color: #222 !important;
+}
+.pe-quote-dark blockquote .pe-rich p::before,
+.pe-quote-dark blockquote .pe-rich p::after,
+.pe-quote-light blockquote .pe-rich p::before,
+.pe-quote-light blockquote .pe-rich p::after {
+	content: none !important;
+}
+.pe-quote-dark blockquote .pe-rich a,
+.pe-quote-light blockquote .pe-rich a {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pe-rich ul,
+.pe-rich ol {
+	margin: 0 0 1em 0;
+	padding-left: 1.35em;
+}
+.pe-rich li {
+	margin: 0.15em 0;
+}
