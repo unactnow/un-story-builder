@@ -1,7 +1,7 @@
 {
-  "name": "un-feature-stories-timelines",
+  "name": "un-story-builder",
   "version": "1.0.0",
-  "description": "UN Feature Stories and Timelines CMS — Express, Vercel, Neon",
+  "description": "UN Story Builder — Express, Vercel, Neon",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

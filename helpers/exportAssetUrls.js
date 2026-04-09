@@ -3,7 +3,7 @@
  * Defaults to jsDelivr `gh` URLs for this repo. jsDelivr only serves **public** GitHub repos; private
  * repos return 404. Override with EXPORT_ASSET_BASE_URL (e.g. your deployed site origin) if the repo is private.
  */
-const DEFAULT_JSDELIVR_REPO = process.env.EXPORT_JSDELIVR_REPO || 'unactnow/un-feature-stories-timelines';
+const DEFAULT_JSDELIVR_REPO = process.env.EXPORT_JSDELIVR_REPO || 'unactnow/un-story-builder';
 const DEFAULT_JSDELIVR_REF = process.env.EXPORT_JSDELIVR_REF || 'main';
 
 function getExportAssetBase() {

@@ -37,7 +37,7 @@ async function seed() {
   }
 
   const defaults = [
-    { key: 'site_name', value: 'UN Feature Stories and Timelines', label: 'Site Name', type: 'text' },
+    { key: 'site_name', value: 'UN Story Builder', label: 'Site Name', type: 'text' },
     { key: 'tagline', value: '', label: 'Tagline', type: 'text' },
     { key: 'footer_text', value: '', label: 'Footer Text', type: 'text' },
     { key: 'analytics_code', value: '', label: 'Analytics Code', type: 'textarea' },
