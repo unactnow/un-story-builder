@@ -1,8 +1,5 @@
-const fs = require('fs');
-const path = require('path');
-
-const timelineCss = fs.readFileSync(path.join(__dirname, 'static', 'timeline.css'), 'utf8');
-const timelineJs = fs.readFileSync(path.join(__dirname, 'static', 'timeline.js'), 'utf8');
+const { exportAssetUrl, mergedAssetUrlForPreview, basePeaceAndSecurityStylesheetHref } = require('./exportAssetUrls');
+const { htmlCommentSafe } = require('./htmlComment');
 const { parseDisplayDateToISO } = require('./parseDisplayDate');
 const { sanitizeRichText, isStoredRichHtml } = require('./sanitizeRichText');
 
@@ -23,7 +20,14 @@ function safeUrl(url) {
   return '';
 }
 
-function generateTimelineHTML(timeline, events) {
+/**
+ * @param {{ req?: import('express').Request }} [options] - pass `{ req }` for admin preview (jsDelivr in production, same-origin in dev)
+ */
+function generateTimelineHTML(timeline, events, options = {}) {
+  const assetUrl = options.req
+    ? (rel) => mergedAssetUrlForPreview(options.req, rel)
+    : exportAssetUrl;
+
   const t = timeline.get ? timeline.get({ plain: true }) : timeline;
   const title = escapeHtml(t.title || '');
   const description = t.description ? String(t.description).trim() : '';
@@ -40,16 +44,32 @@ function generateTimelineHTML(timeline, events) {
     return ao - bo;
   });
 
-  const stylesheet = '<link href="https://cdn.jsdelivr.net/gh/robertirish/un-peace-and-security-stylesheet@main/styles.css" rel="stylesheet">';
-  const styleBlock = `<style type="text/css">\n${timelineCss}\n</style>`;
+  const commentPreviewReset = `<!-- ${htmlCommentSafe('Browser default reset (standalone preview / export)')} -->`;
+  const previewResetLink = `<link href="${escapeHtml(assetUrl('/export/preview-reset.css'))}" rel="stylesheet">`;
+
+  const commentBaseStylesheet = `<!-- ${htmlCommentSafe('Base UN peace and security stylesheet (site-wide typography and layout)')} -->`;
+  const stylesheet = `<link href="${escapeHtml(basePeaceAndSecurityStylesheetHref(options.req))}" rel="stylesheet">`;
+  const commentMergedStylesheet = `<!-- ${htmlCommentSafe('Feature story & timeline: styles.css (feature story + timeline)')} -->`;
+  const mergedStylesheet = `<link href="${escapeHtml(assetUrl('/export/styles.css'))}" rel="stylesheet">`;
 
   const header = `<div class="tl-header">
 \t<h2>${title}</h2>
 ${descP}</div>`;
 
+  function plainForComment(raw) {
+    return String(raw || '')
+      .replace(/<[^>]+>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   let items = '';
   sorted.forEach((ev) => {
     const e = ev.get ? ev.get({ plain: true }) : ev;
+    const datePlain = plainForComment(e.dateText || '');
+    const titlePlain = plainForComment(e.heading || '');
+    const eventComment = `<!-- ${htmlCommentSafe(datePlain || '—')} | ${htmlCommentSafe(titlePlain || '—')} -->`;
+
     const dateText = escapeHtml(e.dateText || '');
     const dateISO = parseDisplayDateToISO(e.dateText || '');
     const loc = (e.location && String(e.location).trim())
@@ -84,14 +104,19 @@ ${descP}</div>`;
 
     const cardClass = hasImg ? 'tl-card tl-has-img' : 'tl-card';
 
-    items += `<li class="tl-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/Event">
+    const descBlock = isStoredRichHtml(descRaw)
+      ? `\t\t<div class="tl-rich" itemprop="description">${desc}</div>`
+      : `\t\t<p itemprop="description">${desc}</p>`;
+
+    items += `${eventComment}\n<li class="tl-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/Event">
 \t<div aria-hidden="true" class="tl-dot"></div>
 \t<div class="${cardClass}">
 \t\t${timeTag}
 ${loc}\t\t<h3 itemprop="name">${head}</h3>
-\t\t${isStoredRichHtml(descRaw) ? `<div class="tl-rich" itemprop="description">${desc}</div>` : `<p itemprop="description">${desc}</p>`}
-${hasImg ? imgBlock + '\n' : ''}\t</div>
+${descBlock}
+${hasImg ? `${imgBlock}\n` : ''}\t</div>
 </li>
+
 `;
   });
 
@@ -101,15 +126,22 @@ ${header}
 ${items}\t</ol>
 </section>`;
 
-  const scriptBlock = `<script>\n${timelineJs}\n</script>`;
+  const commentMergedScript = `<!-- ${htmlCommentSafe('Feature story & timeline: functions.js (feature story + timeline behaviour)')} -->`;
+  const scriptBlock = `<script src="${escapeHtml(assetUrl('/export/functions.js'))}"></script>`;
 
   return [
+    commentPreviewReset,
+    previewResetLink,
+    '',
+    commentBaseStylesheet,
     stylesheet,
     '',
-    styleBlock,
+    commentMergedStylesheet,
+    mergedStylesheet,
     '',
     section,
     '',
+    commentMergedScript,
     scriptBlock,
   ].join('\n');
 }

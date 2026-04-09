@@ -1,46 +1,82 @@
 <%- include('../partials/admin-head') %>
-<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+<link rel="stylesheet" href="/css/quill-snow.css">
 
-<% var _labels = { hero_image: 'Hero: image', hero_video: 'Hero: video', full_image: 'Full-screen image', full_image_overlay_left: 'Image + overlay (left)', full_image_overlay_center: 'Image + overlay (center)', full_image_overlay_right: 'Image + overlay (right)', full_image_subtitle: 'Image + statement subtitle', split_image_left: 'Split: image left, text right', split_image_right: 'Split: image right, text left', text_block: 'Text block (heading + body)', text_body: 'Text block (body only)', quote_dark: 'Quote (dark / blue)', quote_light: 'Quote (light / white)', divider: 'Divider' }; %>
-<% var _blockTypes = ['hero_image','hero_video','full_image','full_image_overlay_left','full_image_overlay_center','full_image_overlay_right','full_image_subtitle','split_image_left','split_image_right','text_block','text_body','quote_dark','quote_light','divider']; %>
+<% var _labels = { hero_image: 'Hero: image', hero_video: 'Hero: video', full_image: 'Full-screen image', full_image_overlay_left: 'Image + overlay (left)', full_image_overlay_center: 'Image + overlay (center)', full_image_overlay_right: 'Image + overlay (right)', full_image_subtitle: 'Image + statement subtitle', split_image_left: 'Split: image left, text right', split_image_right: 'Split: image right, text left', text_block: 'Text block (heading + body)', text_body: 'Text block (body only)', quote_dark: 'Quote (dark / blue)', quote_light: 'Quote (light / white)', code_block: 'Code (HTML embed)', divider: 'Divider' }; %>
+<% var _blockHelp = { hero_image: 'Full-width hero with a still image; optional headline and subheading', hero_video: 'Full-width hero with a video URL; optional headline and caption', full_image: 'Edge-to-edge image with optional caption', full_image_overlay_left: 'Full-bleed image with overlay text aligned to the left', full_image_overlay_center: 'Full-bleed image with overlay text centered', full_image_overlay_right: 'Full-bleed image with overlay text aligned to the right', full_image_subtitle: 'Image with a prominent subtitle line below it', split_image_left: 'Two columns: image on the left, rich text on the right', split_image_right: 'Two columns: image on the right, rich text on the left', text_block: 'Section with a heading plus rich body text', text_body: 'Body text only (no separate heading field)', quote_dark: 'Pull quote on a dark blue panel with optional speaker and title', quote_light: 'Pull quote on a light panel with optional speaker and title', code_block: 'Embeds raw HTML or scripts supplied in the code field (use with care)', divider: 'Horizontal rule; optional short heading as a section label' }; %>
+<% var _blockTypes = ['hero_image','hero_video','full_image','full_image_overlay_left','full_image_overlay_center','full_image_overlay_right','full_image_subtitle','split_image_left','split_image_right','text_block','text_body','quote_dark','quote_light','code_block','divider']; %>
 <% var _empty = { heading: '', subheading: '', bodyText: '', quoteText: '', quoteSpeaker: '', quoteSpeakerTitle: '', imageUrl: '', imageAlt: '', imageCaption: '', videoUrl: '' }; %>
 
 <h2><%= story ? 'Edit story' : 'New story' %><% if (story && revisionCount > 0) { %> <span class="title-meta">(<a href="/admin/stories/<%= story.id %>/revisions"><%= revisionCount %> revision<%= revisionCount !== 1 ? 's' : '' %></a>)</span><% } %></h2>
 
-<form method="post" action="<%= story ? '/admin/stories/' + story.id + '/edit' : '/admin/stories/new' %>" id="story-form">
+<form method="post" action="<%= story ? '/admin/stories/' + story.id + '/edit' : '/admin/stories/new' %>" id="story-form" class="term-edit-layout" data-has-delete="<%= story ? 'true' : 'false' %>">
   <input type="hidden" name="_csrf_token" value="<%= csrfToken %>">
 
-  <div class="form-row">
-    <label for="title">Title *</label>
-    <input type="text" id="title" name="title" required value="<%= story ? story.title : '' %>" class="wide">
-  </div>
+  <div class="term-edit-form-col">
+    <div class="form-row">
+      <label for="title">Title *</label>
+      <input type="text" id="title" name="title" required value="<%= story ? story.title : '' %>" class="wide">
+    </div>
 
-  <div class="btn-row">
-    <button type="submit" class="btn">Save</button>
-    <% if (story) { %>
-    <a href="/admin/stories/<%= story.id %>/export" class="btn btn-outline">Export</a>
-    <button type="button" class="btn btn-outline" style="color:var(--color-error);border-color:var(--color-error);" id="btn-delete-story">Delete</button>
-    <% } %>
-  </div>
+    <div class="btn-row">
+      <button type="submit" class="btn">Save</button>
+      <% if (story) { %>
+      <button type="button" class="btn btn-outline" id="btn-preview-story" title="Save your edits and open a live preview in a new tab">Preview</button>
+      <a href="/admin/stories/<%= story.id %>/export" class="btn btn-outline">Export</a>
+      <button type="button" class="btn btn-outline" style="color:var(--color-error);border-color:var(--color-error);" id="btn-delete-story">Delete</button>
+      <% } %>
+    </div>
 
-  <h3>Blocks</h3>
-  <div id="block-list" class="block-list" data-drag-container data-reorder-url="<%= story ? '/admin/stories/' + story.id + '/blocks/reorder' : '' %>" data-reorder-id-key="blockIds">
-    <% blocks.forEach(function(block, i) { %>
-    <%- include('./partials/story-block', { block: block, index: i }) %>
-    <% }); %>
-  </div>
-
-  <div class="add-block-bar">
-    <label for="add-block-type" class="visually-hidden">Block type</label>
-    <select id="add-block-type">
-      <% _blockTypes.forEach(function(bt) { %>
-      <option value="<%= bt %>"><%= _labels[bt] %></option>
+    <h3>Blocks</h3>
+    <div id="block-list" class="block-list" data-drag-container data-reorder-url="<%= story ? '/admin/stories/' + story.id + '/blocks/reorder' : '' %>" data-reorder-id-key="blockIds">
+      <% blocks.forEach(function(block, i) { %>
+      <%- include('./partials/story-block', { block: block, index: i }) %>
       <% }); %>
-    </select>
-    <button type="button" class="btn btn-outline" id="btn-add-block">Add block</button>
+    </div>
+
+    <div class="add-block-bar">
+      <label for="add-block-type" class="visually-hidden">Block type</label>
+      <select id="add-block-type">
+        <% _blockTypes.forEach(function(bt) { %>
+        <option value="<%= bt %>"><%= _labels[bt] %></option>
+        <% }); %>
+      </select>
+      <button type="button" class="btn btn-outline" id="btn-add-block">Add block</button>
+    </div>
   </div>
 
-  <p class="hint">Preview by exporting and opening the generated HTML. Image URLs show a thumbnail below each field when valid.</p>
+  <div class="term-edit-preview-col">
+    <div class="md-guide">
+      <h3>Images and media</h3>
+      <p class="hint" style="margin:0;">To add images/media to your story, upload your files to the UN website through Drupal, then copy the public URL and paste it into the matching field here (image URL, video URL, etc.).</p>
+      <h3>Exporting HTML</h3>
+      <ol>
+        <li>Use <strong>Preview</strong> to save your draft and open the rendered HTML in a new tab, or click <strong>Save</strong> to store edits without leaving this page</li>
+        <li>Click <strong>Export</strong> (or open Export after saving from the stories list)</li>
+        <li>On the export page, use <strong>Copy to clipboard</strong> or <strong>Download HTML</strong></li>
+        <li>Paste or upload the generated HTML into Drupal (or your target page) according to your team’s publishing process</li>
+      </ol>
+    </div>
+
+    <div class="md-guide">
+      <h3>Block types</h3>
+      <table class="block-type-guide">
+        <thead>
+          <tr>
+            <th scope="col">Block</th>
+            <th scope="col">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% _blockTypes.forEach(function(bt) { %>
+          <tr>
+            <td><%= _labels[bt] %></td>
+            <td><%= _blockHelp[bt] %></td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </form>
 
 <% if (story) { %>
@@ -58,130 +94,6 @@
 <script src="/js/drag-reorder.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 <script src="/js/quill-admin.js"></script>
-<script>
-(function () {
-  function reindexStoryBlocks() {
-    var list = document.getElementById('block-list');
-    if (!list) return;
-    var cards = list.querySelectorAll('.block-card');
-    cards.forEach(function (card, i) {
-      card.querySelectorAll('[name^="blocks["]').forEach(function (el) {
-        el.name = el.name.replace(/^blocks\[[^\]]+\]/, 'blocks[' + i + ']');
-      });
-      var so = card.querySelector('.sort-order-input');
-      if (so) so.value = i;
-    });
-  }
-
-  var blockListEl = document.getElementById('block-list');
-  if (blockListEl) blockListEl.addEventListener('dragreorder', reindexStoryBlocks);
-
-  function wireBlockCard(card) {
-    var header = card.querySelector('.block-card-header');
-    if (header) {
-      header.addEventListener('click', function (e) {
-        if (e.target.closest('.block-actions') || e.target.closest('.drag-handle')) return;
-        card.classList.toggle('expanded');
-      });
-    }
-    card.querySelector('.btn-remove').addEventListener('click', function (e) {
-      e.stopPropagation();
-      if (!confirm('Remove this block?')) return;
-      card.remove();
-      reindexStoryBlocks();
-    });
-    card.querySelector('.btn-move-up').addEventListener('click', function (e) {
-      e.stopPropagation();
-      var prev = card.previousElementSibling;
-      if (prev && prev.classList.contains('block-card')) {
-        card.parentNode.insertBefore(card, prev);
-        reindexStoryBlocks();
-        document.getElementById('block-list').dispatchEvent(new CustomEvent('dragreorder', { bubbles: true }));
-        var url = document.getElementById('block-list').getAttribute('data-reorder-url');
-        if (url) {
-          var key = document.getElementById('block-list').getAttribute('data-reorder-id-key') || 'blockIds';
-          var ids = [];
-          document.querySelectorAll('#block-list .drag-item').forEach(function (it) {
-            var id = it.getAttribute('data-id');
-            if (id) ids.push(id);
-          });
-          if (ids.length === document.querySelectorAll('#block-list .drag-item').length) {
-            var meta = document.querySelector('meta[name="csrf-token"]');
-            var body = {}; body[key] = ids;
-            fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': meta ? meta.getAttribute('content') : '' }, body: JSON.stringify(body) }).catch(function () {});
-          }
-        }
-      }
-    });
-    card.querySelector('.btn-move-down').addEventListener('click', function (e) {
-      e.stopPropagation();
-      var next = card.nextElementSibling;
-      if (next && next.classList.contains('block-card')) {
-        card.parentNode.insertBefore(card, next.nextSibling);
-        reindexStoryBlocks();
-        document.getElementById('block-list').dispatchEvent(new CustomEvent('dragreorder', { bubbles: true }));
-        var url = document.getElementById('block-list').getAttribute('data-reorder-url');
-        if (url) {
-          var key = document.getElementById('block-list').getAttribute('data-reorder-id-key') || 'blockIds';
-          var ids = [];
-          document.querySelectorAll('#block-list .drag-item').forEach(function (it) {
-            var id = it.getAttribute('data-id');
-            if (id) ids.push(id);
-          });
-          if (ids.length === document.querySelectorAll('#block-list .drag-item').length) {
-            var meta = document.querySelector('meta[name="csrf-token"]');
-            var body = {}; body[key] = ids;
-            fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': meta ? meta.getAttribute('content') : '' }, body: JSON.stringify(body) }).catch(function () {});
-          }
-        }
-      }
-    });
-    card.querySelectorAll('.img-url').forEach(function (inp) {
-      inp.addEventListener('input', function () { updateImagePreview(inp); });
-      updateImagePreview(inp);
-    });
-  }
-
-  function updateImagePreview(inp) {
-    var v = (inp.value || '').trim();
-    var wrap = inp.parentNode.parentNode;
-    var prev = wrap.querySelector('.image-preview');
-    if (prev) prev.remove();
-    if (!/^https?:\/\//i.test(v)) return;
-    var div = document.createElement('div');
-    div.className = 'image-preview';
-    var img = document.createElement('img');
-    img.alt = '';
-    img.src = v;
-    img.onerror = function () { div.style.display = 'none'; };
-    div.appendChild(img);
-    wrap.appendChild(div);
-  }
-
-  document.querySelectorAll('#block-list .block-card').forEach(wireBlockCard);
-
-  document.getElementById('btn-add-block').addEventListener('click', function () {
-    var bt = document.getElementById('add-block-type').value;
-    var tpl = document.getElementById('tpl-block-' + bt);
-    if (!tpl) return;
-    var list = document.getElementById('block-list');
-    var n = list.querySelectorAll('.block-card').length;
-    var html = tpl.innerHTML.replace(/__INDEX__/g, String(n));
-    var wrap = document.createElement('div');
-    wrap.innerHTML = html.trim();
-    var card = wrap.firstElementChild;
-    list.appendChild(card);
-    wireBlockCard(card);
-    reindexStoryBlocks();
-    if (window.quillAdmin) window.quillAdmin.initRoots(card);
-  });
-
-  <% if (story) { %>
-  document.getElementById('btn-delete-story').addEventListener('click', function () {
-    if (confirm('Delete this story permanently?')) document.getElementById('delete-story-form').submit();
-  });
-  <% } %>
-})();
-</script>
+<script src="/js/story-edit.js"></script>
 
 <%- include('../partials/admin-footer') %>

@@ -5,7 +5,7 @@ const {
   StoryRevision,
 } = require('../models');
 const { ensureAuthenticated } = require('../middleware/auth');
-const { generateStoryHTML } = require('../helpers/exportStory');
+const { generateStoryHTML, escapeHtml } = require('../helpers/exportStory');
 const { sanitizeRichText } = require('../helpers/sanitizeRichText');
 
 const router = express.Router();
@@ -22,12 +22,15 @@ function slugify(text) {
 
 function blockFieldsFromBody(entry) {
   if (!entry || typeof entry !== 'object') return null;
+  const blockType = entry.blockType;
+  const rawBody = entry.bodyText != null ? String(entry.bodyText) : '';
+  const bodyText = blockType === 'code_block' ? rawBody : sanitizeRichText(rawBody);
   return {
-    blockType: entry.blockType,
+    blockType,
     sortOrder: parseInt(entry.sortOrder, 10) || 0,
     heading: entry.heading != null ? String(entry.heading) : '',
     subheading: entry.subheading != null ? String(entry.subheading) : '',
-    bodyText: sanitizeRichText(entry.bodyText != null ? String(entry.bodyText) : ''),
+    bodyText,
     quoteText: sanitizeRichText(entry.quoteText != null ? String(entry.quoteText) : ''),
     quoteSpeaker: entry.quoteSpeaker != null ? String(entry.quoteSpeaker) : '',
     quoteSpeakerTitle: entry.quoteSpeakerTitle != null ? String(entry.quoteSpeakerTitle) : '',
@@ -75,6 +78,34 @@ async function buildSnapshot(story) {
       };
     }),
   });
+}
+
+/** Persists story + blocks from req.body (same as POST /edit). Returns { story } or { error }. */
+async function saveStoryDocument(req, storyId) {
+  const story = await FeatureStory.findByPk(storyId);
+  if (!story) {
+    return { error: 'not_found' };
+  }
+  const snap = await buildSnapshot(story);
+  await StoryRevision.create({
+    storyId: story.id,
+    snapshot: snap,
+    revisedBy: req.user.username || '',
+  });
+
+  const title = (req.body.title || '').trim();
+  if (!title) {
+    return { error: 'title_required' };
+  }
+  await story.update({ title });
+
+  await StoryBlock.destroy({ where: { storyId: story.id } });
+  const blockData = parseBlocks(req.body);
+  for (let i = 0; i < blockData.length; i += 1) {
+    const b = blockData[i];
+    await StoryBlock.create({ ...b, storyId: story.id, sortOrder: i });
+  }
+  return { story };
 }
 
 router.get('/', ensureAuthenticated, async (req, res) => {
@@ -141,38 +172,41 @@ router.get('/:id/edit', ensureAuthenticated, async (req, res) => {
 
 router.post('/:id/edit', ensureAuthenticated, async (req, res) => {
   try {
-    const story = await FeatureStory.findByPk(req.params.id);
-    if (!story) {
+    const result = await saveStoryDocument(req, req.params.id);
+    if (result.error === 'not_found') {
       req.flash('error_msg', 'Story not found.');
       return res.redirect('/admin/stories');
     }
-    const snap = await buildSnapshot(story);
-    await StoryRevision.create({
-      storyId: story.id,
-      snapshot: snap,
-      revisedBy: req.user.username || '',
-    });
-
-    const title = (req.body.title || '').trim();
-    if (!title) {
+    if (result.error === 'title_required') {
       req.flash('error_msg', 'Title is required.');
-      return res.redirect(`/admin/stories/${story.id}/edit`);
-    }
-    await story.update({ title });
-
-    await StoryBlock.destroy({ where: { storyId: story.id } });
-    const blockData = parseBlocks(req.body);
-    for (let i = 0; i < blockData.length; i += 1) {
-      const b = blockData[i];
-      await StoryBlock.create({ ...b, storyId: story.id, sortOrder: i });
+      return res.redirect(`/admin/stories/${req.params.id}/edit`);
     }
 
     req.flash('success_msg', 'Story saved.');
-    return res.redirect(`/admin/stories/${story.id}/edit`);
+    return res.redirect(`/admin/stories/${result.story.id}/edit`);
   } catch (err) {
     console.error(err);
     req.flash('error_msg', 'Failed to save story.');
     return res.redirect(`/admin/stories/${req.params.id}/edit`);
+  }
+});
+
+router.post('/:id/preview-save', ensureAuthenticated, async (req, res) => {
+  try {
+    const result = await saveStoryDocument(req, req.params.id);
+    if (result.error === 'not_found') {
+      return res.status(404).json({ ok: false, error: 'not_found' });
+    }
+    if (result.error === 'title_required') {
+      return res.status(400).json({ ok: false, error: 'title_required' });
+    }
+    return res.json({
+      ok: true,
+      previewUrl: `/admin/stories/${result.story.id}/preview`,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ ok: false, error: 'server' });
   }
 });
 
@@ -185,6 +219,80 @@ router.post('/:id/delete', ensureAuthenticated, async (req, res) => {
     req.flash('error_msg', 'Failed to delete story.');
   }
   res.redirect('/admin/stories');
+});
+
+router.get('/:id/preview', ensureAuthenticated, async (req, res) => {
+  const story = await FeatureStory.findByPk(req.params.id);
+  if (!story) {
+    return res.status(404).send('Story not found');
+  }
+  const blocks = await StoryBlock.findAll({
+    where: { storyId: story.id },
+    order: [['sortOrder', 'ASC']],
+  });
+  const htmlOutput = generateStoryHTML(story, blocks, { req });
+  const titleSafe = escapeHtml(story.title || 'Story');
+  const editUrl = `/admin/stories/${story.id}/edit`;
+  const doc = `<!DOCTYPE html>
+<html lang="en" class="fs-preview-standalone">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Preview — ${titleSafe}</title>
+<style>
+.fs-preview-edit-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100000;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.25rem;
+  min-height: 48px;
+  padding: 0.5rem 1rem;
+  background: #009edb;
+  font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+.fs-preview-edit-bar a {
+  color: #fff;
+  font-weight: 500;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.fs-preview-edit-bar a:hover {
+  text-decoration: underline;
+}
+.fs-preview-edit-bar-note {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.35;
+  color: rgba(255,255,255,0.88);
+  max-width: 36rem;
+  margin: 0;
+}
+html.fs-preview-standalone body {
+  padding-top: 4.5rem;
+}
+</style>
+</head>
+<body>
+<nav class="fs-preview-edit-bar" aria-label="Preview">
+  <a href="${editUrl}">← Back to edit</a>
+  <span class="fs-preview-edit-bar-note"><strong>Note:</strong> Preview text-sizing and fonts may not display accurately.</span>
+</nav>
+${htmlOutput}
+</body>
+</html>`;
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.set('Content-Disposition', 'inline');
+  res.send(doc);
 });
 
 router.get('/:id/export', ensureAuthenticated, async (req, res) => {

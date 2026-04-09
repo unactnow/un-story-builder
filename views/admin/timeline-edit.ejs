@@ -1,39 +1,56 @@
 <%- include('../partials/admin-head') %>
-<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+<link rel="stylesheet" href="/css/quill-snow.css">
 
 <h2><%= timeline ? 'Edit timeline' : 'New timeline' %><% if (timeline && revisionCount > 0) { %> <span class="title-meta">(<a href="/admin/timelines/<%= timeline.id %>/revisions"><%= revisionCount %> revision<%= revisionCount !== 1 ? 's' : '' %></a>)</span><% } %></h2>
 
-<form method="post" action="<%= timeline ? '/admin/timelines/' + timeline.id + '/edit' : '/admin/timelines/new' %>" id="timeline-form">
+<form method="post" action="<%= timeline ? '/admin/timelines/' + timeline.id + '/edit' : '/admin/timelines/new' %>" id="timeline-form" class="term-edit-layout" data-has-delete="<%= timeline ? 'true' : 'false' %>">
   <input type="hidden" name="_csrf_token" value="<%= csrfToken %>">
 
-  <div class="form-row">
-    <label for="title">Title *</label>
-    <input type="text" id="title" name="title" required value="<%= timeline ? timeline.title : '' %>" class="wide">
-  </div>
-  <div class="form-row">
-    <p><label>Description</label></p>
-    <%- include('./partials/wysiwyg-inner', { name: 'description', value: timeline ? (timeline.description || '') : '' }) %>
-    <span class="hint">Subtitle shown in the timeline header when exported.</span>
+  <div class="term-edit-form-col">
+    <div class="form-row">
+      <label for="title">Title *</label>
+      <input type="text" id="title" name="title" required value="<%= timeline ? timeline.title : '' %>" class="wide">
+    </div>
+    <div class="form-row">
+      <p><label>Description</label></p>
+      <%- include('./partials/wysiwyg-inner', { name: 'description', value: timeline ? (timeline.description || '') : '' }) %>
+      <span class="hint">Subtitle shown in the timeline header when exported.</span>
+    </div>
+
+    <div class="btn-row">
+      <button type="submit" class="btn">Save</button>
+      <% if (timeline) { %>
+      <button type="button" class="btn btn-outline" id="btn-preview-timeline" title="Save your edits and open a live preview in a new tab">Preview</button>
+      <a href="/admin/timelines/<%= timeline.id %>/export" class="btn btn-outline">Export</a>
+      <button type="button" class="btn btn-outline" style="color:var(--color-error);border-color:var(--color-error);" id="btn-delete-timeline">Delete</button>
+      <% } %>
+    </div>
+
+    <h3>Events</h3>
+    <div id="event-list" class="block-list" data-drag-container data-reorder-url="<%= timeline ? '/admin/timelines/' + timeline.id + '/events/reorder' : '' %>" data-reorder-id-key="eventIds">
+      <% events.forEach(function(ev, i) { %>
+      <%- include('./partials/timeline-event', { event: ev, index: i }) %>
+      <% }); %>
+    </div>
+
+    <p><button type="button" class="btn btn-outline" id="btn-add-event">Add event</button></p>
   </div>
 
-  <div class="btn-row">
-    <button type="submit" class="btn">Save</button>
-    <% if (timeline) { %>
-    <a href="/admin/timelines/<%= timeline.id %>/export" class="btn btn-outline">Export</a>
-    <button type="button" class="btn btn-outline" style="color:var(--color-error);border-color:var(--color-error);" id="btn-delete-timeline">Delete</button>
-    <% } %>
+  <div class="term-edit-preview-col">
+    <div class="md-guide">
+      <h3>About timelines</h3>
+      <p class="hint" style="margin:0;">A timeline is a dated list of events with optional images. Build the sequence here; export produces standalone HTML that matches the UN feature styles.</p>
+      <h3>Images and media</h3>
+      <p class="hint" style="margin:0;">To add images/media to your timeline, upload your files to the UN website through Drupal, then copy the public URL and paste it into the matching field here (image URL, video URL, etc.).</p>
+      <h3>Exporting HTML</h3>
+      <ol>
+        <li>Use <strong>Preview</strong> to save your draft and open the rendered HTML in a new tab, or click <strong>Save</strong> to store edits without leaving this page</li>
+        <li>Click <strong>Export</strong> (or open Export after saving from the timelines list)</li>
+        <li>On the export page, use <strong>Copy to clipboard</strong> or <strong>Download HTML</strong></li>
+        <li>Paste or upload the generated HTML into Drupal (or your target page) according to your team’s publishing process</li>
+      </ol>
+    </div>
   </div>
-
-  <h3>Events</h3>
-  <div id="event-list" class="block-list" data-drag-container data-reorder-url="<%= timeline ? '/admin/timelines/' + timeline.id + '/events/reorder' : '' %>" data-reorder-id-key="eventIds">
-    <% events.forEach(function(ev, i) { %>
-    <%- include('./partials/timeline-event', { event: ev, index: i }) %>
-    <% }); %>
-  </div>
-
-  <p><button type="button" class="btn btn-outline" id="btn-add-event">Add event</button></p>
-
-  <p class="hint">Image URLs show a thumbnail below each field when valid.</p>
 </form>
 
 <% if (timeline) { %>
@@ -49,121 +66,6 @@
 <script src="/js/drag-reorder.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 <script src="/js/quill-admin.js"></script>
-<script>
-(function () {
-  function reindexTimelineEvents() {
-    var list = document.getElementById('event-list');
-    if (!list) return;
-    var cards = list.querySelectorAll('.event-card');
-    cards.forEach(function (card, i) {
-      card.querySelectorAll('[name^="events["]').forEach(function (el) {
-        el.name = el.name.replace(/^events\[[^\]]+\]/, 'events[' + i + ']');
-      });
-      var so = card.querySelector('.sort-order-input');
-      if (so) so.value = i;
-    });
-  }
-
-  var eventListEl = document.getElementById('event-list');
-  if (eventListEl) eventListEl.addEventListener('dragreorder', reindexTimelineEvents);
-
-  function postEventsReorder() {
-    var list = document.getElementById('event-list');
-    var url = list.getAttribute('data-reorder-url');
-    if (!url) return;
-    var key = list.getAttribute('data-reorder-id-key') || 'eventIds';
-    var ids = [];
-    var items = list.querySelectorAll('.drag-item');
-    for (var j = 0; j < items.length; j += 1) {
-      var id = items[j].getAttribute('data-id');
-      if (!id || id.trim() === '') return;
-      ids.push(id);
-    }
-    if (ids.length !== items.length) return;
-    var meta = document.querySelector('meta[name="csrf-token"]');
-    var body = {}; body[key] = ids;
-    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': meta ? meta.getAttribute('content') : '' }, body: JSON.stringify(body) }).catch(function () {});
-  }
-
-  function wireEventCard(card) {
-    var header = card.querySelector('.event-card-header');
-    if (header) {
-      header.addEventListener('click', function (e) {
-        if (e.target.closest('.block-actions') || e.target.closest('.drag-handle')) return;
-        card.classList.toggle('expanded');
-      });
-    }
-    card.querySelector('.btn-remove').addEventListener('click', function (e) {
-      e.stopPropagation();
-      if (!confirm('Remove this event?')) return;
-      card.remove();
-      reindexTimelineEvents();
-    });
-    card.querySelector('.btn-move-up').addEventListener('click', function (e) {
-      e.stopPropagation();
-      var prev = card.previousElementSibling;
-      if (prev && prev.classList.contains('event-card')) {
-        card.parentNode.insertBefore(card, prev);
-        reindexTimelineEvents();
-        if (eventListEl) eventListEl.dispatchEvent(new CustomEvent('dragreorder', { bubbles: true }));
-        postEventsReorder();
-      }
-    });
-    card.querySelector('.btn-move-down').addEventListener('click', function (e) {
-      e.stopPropagation();
-      var next = card.nextElementSibling;
-      if (next && next.classList.contains('event-card')) {
-        card.parentNode.insertBefore(card, next.nextSibling);
-        reindexTimelineEvents();
-        if (eventListEl) eventListEl.dispatchEvent(new CustomEvent('dragreorder', { bubbles: true }));
-        postEventsReorder();
-      }
-    });
-    card.querySelectorAll('.img-url').forEach(function (inp) {
-      inp.addEventListener('input', function () { updateImagePreview(inp); });
-      updateImagePreview(inp);
-    });
-  }
-
-  function updateImagePreview(inp) {
-    var v = (inp.value || '').trim();
-    var wrap = inp.parentNode.parentNode;
-    var prev = wrap.querySelector('.image-preview');
-    if (prev) prev.remove();
-    if (!/^https?:\/\//i.test(v)) return;
-    var div = document.createElement('div');
-    div.className = 'image-preview';
-    var img = document.createElement('img');
-    img.alt = '';
-    img.src = v;
-    img.onerror = function () { div.style.display = 'none'; };
-    div.appendChild(img);
-    wrap.appendChild(div);
-  }
-
-  document.querySelectorAll('#event-list .event-card').forEach(wireEventCard);
-
-  document.getElementById('btn-add-event').addEventListener('click', function () {
-    var tpl = document.getElementById('tpl-timeline-event');
-    if (!tpl) return;
-    var list = document.getElementById('event-list');
-    var n = list.querySelectorAll('.event-card').length;
-    var html = tpl.innerHTML.replace(/__INDEX__/g, String(n));
-    var wrap = document.createElement('div');
-    wrap.innerHTML = html.trim();
-    var card = wrap.firstElementChild;
-    list.appendChild(card);
-    wireEventCard(card);
-    reindexTimelineEvents();
-    if (window.quillAdmin) window.quillAdmin.initRoots(card);
-  });
-
-  <% if (timeline) { %>
-  document.getElementById('btn-delete-timeline').addEventListener('click', function () {
-    if (confirm('Delete this timeline permanently?')) document.getElementById('delete-timeline-form').submit();
-  });
-  <% } %>
-})();
-</script>
+<script src="/js/timeline-edit.js"></script>
 
 <%- include('../partials/admin-footer') %>

@@ -1,4 +1,4 @@
-<% var b = block; var i = index; var _btl = { hero_image: 'Hero: image', hero_video: 'Hero: video', full_image: 'Full-screen image', full_image_overlay_left: 'Image + overlay (left)', full_image_overlay_center: 'Image + overlay (center)', full_image_overlay_right: 'Image + overlay (right)', full_image_subtitle: 'Image + statement subtitle', split_image_left: 'Split: image left, text right', split_image_right: 'Split: image right, text left', text_block: 'Text block (heading + body)', text_body: 'Text block (body only)', quote_dark: 'Quote (dark / blue)', quote_light: 'Quote (light / white)', divider: 'Divider' }; %>
+<% var b = block; var i = index; var _btl = { hero_image: 'Hero: image', hero_video: 'Hero: video', full_image: 'Full-screen image', full_image_overlay_left: 'Image + overlay (left)', full_image_overlay_center: 'Image + overlay (center)', full_image_overlay_right: 'Image + overlay (right)', full_image_subtitle: 'Image + statement subtitle', split_image_left: 'Split: image left, text right', split_image_right: 'Split: image right, text left', text_block: 'Text block (heading + body)', text_body: 'Text block (body only)', quote_dark: 'Quote (dark / blue)', quote_light: 'Quote (light / white)', code_block: 'Code (HTML embed)', divider: 'Divider' }; %>
 <div class="block-card drag-item <%= b.id ? '' : 'expanded' %>" data-id="<%= b.id || '' %>" draggable="true">
   <div class="block-card-header">
     <span class="drag-handle" title="Drag to reorder">&#9776;</span>
@@ -61,6 +61,8 @@
       <%- include('./wysiwyg-inner', { name: 'blocks[' + i + '][quoteText]', value: b.quoteText }) %>
       <p><label>Speaker name<br><input type="text" name="blocks[<%= i %>][quoteSpeaker]" value="<%= (b.quoteSpeaker || '') %>" class="wide"></label></p>
       <p><label>Speaker title &amp; organization<br><input type="text" name="blocks[<%= i %>][quoteSpeakerTitle]" value="<%= (b.quoteSpeakerTitle || '') %>" class="wide"></label></p>
+    <% } else if (b.blockType === 'code_block') { %>
+      <p><label>HTML code<br><textarea name="blocks[<%= i %>][bodyText]" rows="18" class="wide code-embed" spellcheck="false"><%- b.bodyText || '' %></textarea></label></p>
     <% } else if (b.blockType === 'divider') { %>
       <p><label>Divider label<br><input type="text" name="blocks[<%= i %>][heading]" value="<%= (b.heading || '') %>" class="wide"></label></p>
     <% } %>

@@ -6,15 +6,11 @@ const { ensureAuthenticated, isAdmin } = require('../middleware/auth');
 
 router.get('/', ensureAuthenticated, async (req, res) => {
   try {
-    const storyCount = await FeatureStory.count();
-    const timelineCount = await Timeline.count();
     const userCount = await User.count();
     const recentStory = await FeatureStory.findOne({ order: [['updatedAt', 'DESC']] });
     const recentTimeline = await Timeline.findOne({ order: [['updatedAt', 'DESC']] });
     res.render('admin/dashboard', {
       title: 'Dashboard',
-      storyCount,
-      timelineCount,
       userCount,
       recentStory,
       recentTimeline,
@@ -23,8 +19,6 @@ router.get('/', ensureAuthenticated, async (req, res) => {
     console.error(err);
     res.render('admin/dashboard', {
       title: 'Dashboard',
-      storyCount: 0,
-      timelineCount: 0,
       userCount: 0,
       recentStory: null,
       recentTimeline: null,

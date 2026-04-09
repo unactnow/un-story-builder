@@ -102,6 +102,7 @@ const StoryBlock = sequelize.define('StoryBlock', {
       'text_body',
       'quote_dark',
       'quote_light',
+      'code_block',
       'divider'
     ),
     allowNull: false,

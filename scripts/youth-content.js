@@ -1,148 +1,183 @@
 /**
- * Canonical Youth feature story + timeline (hero, body copy, and sample photo-essay blocks).
- * Replace image URLs with production assets when publishing.
+ * Seeded example: content aligned with photo-essay-template.html (UN photo essay blocks demo).
+ * A separate minimal timeline sample is included; replace URLs with production assets when publishing.
  */
 
 module.exports = {
   featureStory: {
-    title: 'Youth Have Always Moved History',
+    title: 'Photo essay template',
   },
   storyBlocks: [
     {
       blockType: 'hero_video',
       sortOrder: 0,
-      heading: 'Youth Have Always Moved History',
+      heading: 'Hero: Full-Screen Video with Centered Title',
       subheading:
-        'From lunch counters to climate strikes, young people have shaped the course of peace and justice worldwide.',
+        'Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
       videoUrl: 'https://www.un.org/sites/un2.un.org/files/sample-video.mp4',
       imageCaption: 'Video credit goes here',
     },
     {
-      blockType: 'text_body',
+      blockType: 'text_block',
       sortOrder: 1,
+      heading: 'Text Block: Header + Body',
       bodyText:
-        'Across generations, young organizers have turned moral clarity into collective action: sit-ins that spread across the American South, student uprisings that challenged apartheid, and school strikes that put climate justice on the agenda of world leaders. This story is a glimpse of that arc — not an exhaustive history, but a reminder that youth leadership is not new; it is a through-line in the struggle for dignity and peace.',
+        'Cras mattis consectetur purus sit amet fermentum. Donec ullamcorper nulla non metus auctor fringilla. Aenean lacinia bibendum nulla sed consectetur.\n\nMaecenas sed diam eget risus varius blandit sit amet non magna. Donec id elit non mi porta gravida at eget metus.',
     },
     {
-      blockType: 'divider',
+      blockType: 'full_image_overlay_left',
       sortOrder: 2,
-      heading: 'Moments along the way',
+      heading: 'Image + Text Overlay (Left)',
+      bodyText:
+        'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+      imageUrl:
+        'https://www.un.org/sites/un2.un.org/files/choosing-not-to-be-broken/1_Dialogues%20of%20Victory%20UA.jpg',
+      imageAlt: 'Ukrainian youth participating in the Dialogues for Victory project',
+      imageCaption: 'Photo credit lorem ipsum',
     },
     {
       blockType: 'split_image_left',
       sortOrder: 3,
-      heading: 'Civil rights and courage at the counter',
+      heading: 'Split: Image Left, Text Right',
       bodyText:
-        'In 1960, four students in Greensboro, North Carolina, refused to leave a segregated lunch counter. Their disciplined, nonviolent protest inspired thousands of similar actions — a textbook example of how young people can shift what a society considers possible.',
-      imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1600&q=80',
-      imageAlt: 'Crowd at a peaceful demonstration',
-      imageCaption: 'Placeholder image — replace with rights-cleared photo for production',
+        'Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh.\n\nDonec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc.',
+      imageUrl: 'https://www.un.org/sites/un2.un.org/files/major_swathi_shanthakumar_malakal_south_sudan.jpg',
+      imageAlt: 'Major Swathi Shanthakumar, Indian peacekeeper in South Sudan',
+      imageCaption: 'Credit: UN Photo',
     },
     {
-      blockType: 'split_image_right',
+      blockType: 'full_image_overlay_right',
       sortOrder: 4,
-      heading: 'Students on the streets, governments on notice',
+      heading: 'Image + Text Overlay (Right)',
       bodyText:
-        'From Soweto to the Velvet Revolution, student movements have exposed injustice and forced institutions to respond. The pattern repeats: moral authority, mass mobilization, and the demand for a seat at the table.',
-      imageUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1600&q=80',
-      imageAlt: 'Students collaborating outdoors',
-      imageCaption: 'Placeholder image — replace with rights-cleared photo for production',
+        'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
+      imageUrl: 'https://www.un.org/sites/un2.un.org/files/major_swathi_shanthakumar_malakal_south_sudan.jpg',
+      imageAlt: 'Major Swathi Shanthakumar, Indian peacekeeper in Malakal, South Sudan',
+      imageCaption: 'Photo credit lorem ipsum',
+    },
+    {
+      blockType: 'text_body',
+      sortOrder: 5,
+      bodyText:
+        'Praesent commodo cursus magna, vel scelerisque nisl consectetur et. Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor.\n\nNullam id dolor id nibh ultricies vehicula ut id elit. Cras justo odio, dapibus ut facilisis in, egestas eget quam. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.',
     },
     {
       blockType: 'quote_dark',
-      sortOrder: 5,
+      sortOrder: 6,
       quoteText:
-        'Young people are not only the leaders of tomorrow — they are leading today, in classrooms, online, and in the streets.',
-      quoteSpeaker: 'United Nations',
-      quoteSpeakerTitle: 'On youth participation and peace',
+        'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.',
+      quoteSpeaker: 'Speaker Name',
+      quoteSpeakerTitle: 'Title, Organisation',
     },
     {
-      blockType: 'full_image_overlay_center',
-      sortOrder: 6,
-      heading: 'Climate is a peace issue',
+      blockType: 'split_image_right',
+      sortOrder: 7,
+      heading: 'Split: Image Right, Text Left',
       bodyText:
-        'Fridays for Future and allied movements linked environmental destruction to inequality and security. When millions of students walked out of class, they asked leaders to treat the planet — and each other — as if the future mattered.',
-      imageUrl: 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=1600&q=80',
-      imageAlt: 'Landscape with wind turbines at dusk',
-      imageCaption: 'Placeholder image — replace with rights-cleared photo for production',
+        'Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet etiam ultricies nisi vel augue.\n\nVestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae.',
+      imageUrl: 'https://www.un.org/sites/un2.un.org/files/2026/02/tanzania.jpg',
+      imageAlt: 'UN peacekeepers from Tanzania on patrol',
+      imageCaption: 'Credit: UN Photo',
+    },
+    {
+      blockType: 'full_image',
+      sortOrder: 8,
+      imageUrl: 'https://www.un.org/sites/un2.un.org/files/women-empowerment.jpg',
+      imageAlt: 'Women participating in an empowerment programme in Nepal',
+      imageCaption: 'Photo credit lorem ipsum',
     },
     {
       blockType: 'text_block',
-      sortOrder: 7,
-      heading: 'What comes next',
+      sortOrder: 9,
+      heading: 'Text Block: Another Header + Body',
       bodyText:
-        'The interactive timeline on this site traces more milestones: from regional uprisings to global solidarity. Use it as a starting point for teaching, advocacy, or your own organizing — and add the stories from your community that belong in this narrative.',
+        'Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.\n\nNeque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.',
+    },
+    {
+      blockType: 'full_image_overlay_center',
+      sortOrder: 10,
+      heading: 'Image + Text Overlay (Center)',
+      bodyText:
+        'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+      imageUrl: 'https://www.un.org/sites/un2.un.org/files/2025-12-05-my-peace/001.jpg',
+      imageAlt:
+        'Muhindo Kamate, trained by UNFPA with support from the Government of Japan, dedicates his life to supporting young people in DRC on the path to peace. Credit: RET Germany',
+      imageCaption: 'Photo credit lorem ipsum',
+    },
+    {
+      blockType: 'split_image_left',
+      sortOrder: 11,
+      heading: 'Split: Image Left (Again)',
+      bodyText:
+        'Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis ipsum.\n\nPraesent porttitor, nulla vitae posuere iaculis, arcu nisl dignissim dolor, a pretium mi sem ut ipsum.',
+      imageUrl: 'https://www.un.org/sites/un2.un.org/files/students-with-tablets.jpg',
+      imageAlt: 'Students learning with tablets in rural Nepal',
+      imageCaption: 'Credit: Heart of Nepal',
+    },
+    {
+      blockType: 'quote_light',
+      sortOrder: 12,
+      quoteText:
+        'Quote Block (Light): Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui.',
+      quoteSpeaker: 'Speaker Name',
+      quoteSpeakerTitle: 'Title, Organisation',
+    },
+    {
+      blockType: 'full_image_subtitle',
+      sortOrder: 13,
+      subheading: 'Image + Statement Subtitle',
+      imageUrl: 'https://www.un.org/sites/un2.un.org/files/women-empowerment.jpg',
+      imageAlt: 'Women participating in an empowerment programme',
+      imageCaption: 'Photo credit lorem ipsum',
+    },
+    {
+      blockType: 'text_body',
+      sortOrder: 14,
+      bodyText:
+        'Donec ullamcorper nulla non metus auctor fringilla. Maecenas sed diam eget risus varius blandit sit amet non magna. Integer posuere erat a ante venenatis dapibus posuere velit aliquet.\n\nAenean lacinia bibendum nulla sed consectetur. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.',
+    },
+    {
+      blockType: 'quote_dark',
+      sortOrder: 15,
+      quoteText:
+        'Quote Block (Dark): Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae.',
+      quoteSpeaker: 'Speaker Name',
+      quoteSpeakerTitle: 'Title, Organisation',
+    },
+    {
+      blockType: 'full_image',
+      sortOrder: 16,
+      imageUrl: 'https://www.un.org/sites/un2.un.org/files/a-movement-for-peace/DSC_0186.JPG',
+      imageAlt: 'Peace Circle at the 80th UN General Assembly',
+      imageCaption: 'Photo credit lorem ipsum',
     },
   ],
   timeline: {
-    title: 'Youth Have Always Moved History',
+    title: 'Sample timeline',
     description:
-      'From lunch counters to climate strikes, young people have shaped the course of peace and justice worldwide.',
+      'Replace this subtitle with your own. It appears under the title in the exported timeline.',
   },
   timelineEvents: [
     {
       sortOrder: 0,
-      dateText: '1960',
-      location: 'United States',
-      heading: 'Sit-In Movement',
-      description:
-        'Four students sit at a segregated lunch counter, sparking a nationwide nonviolent movement that helps transform civil rights in America.',
+      dateText: 'Phase 1',
+      location: 'Example',
+      heading: 'First milestone',
+      description: 'One or two sentences describing the event. Add an image URL if needed.',
     },
     {
       sortOrder: 1,
-      dateText: '1976',
-      location: 'South Africa',
-      heading: 'Soweto Uprising',
-      description:
-        'Black school students protest apartheid education, igniting global outrage and intensifying the fight for freedom.',
+      dateText: 'Phase 2',
+      location: 'Example',
+      heading: 'Second milestone',
+      description: 'Use the event list to build your chronology; drag to reorder.',
     },
     {
       sortOrder: 2,
-      dateText: '1989',
-      location: 'Czechoslovakia',
-      heading: 'Velvet Revolution',
-      description:
-        'Student demonstrations grow into a peaceful revolution that leads to democratic transition.',
-    },
-    {
-      sortOrder: 3,
-      dateText: '2010–2011',
-      location: 'Tunisia',
-      heading: 'Arab Spring',
-      description:
-        'Fueled by unemployment and exclusion, youth lead nationwide protests that ignite the Arab Spring and demand political change.',
-    },
-    {
-      sortOrder: 4,
-      dateText: '2012',
-      location: 'India',
-      heading: 'Delhi Anti-Rape Protests',
-      description:
-        'Following the brutal gang rape and murder of a young woman in Delhi, youth mobilize nationwide demanding justice and stronger protections for women, leading to major legal reforms.',
-    },
-    {
-      sortOrder: 5,
-      dateText: '2012',
-      location: 'Pakistan',
-      heading: 'The "Malala Moment"',
-      description:
-        "After Malala Yousafzai is shot for going to school, tens of thousands rally across Pakistan demanding girls' right to education and rejecting extremism.",
-    },
-    {
-      sortOrder: 6,
-      dateText: '2015',
-      location: 'Argentina / Global',
-      heading: 'Ni Una Menos (Not One Less)',
-      description:
-        'An intergenerational movement with youth at its heart reshapes laws and public discourse on gender-based violence.',
-    },
-    {
-      sortOrder: 7,
-      dateText: '2018–Present',
-      location: 'Global',
-      heading: 'Fridays for Future',
-      description:
-        'Millions of students in over 150 countries strike for climate action, linking environmental justice to peace and their right to a future.',
+      dateText: 'Phase 3',
+      location: 'Example',
+      heading: 'Third milestone',
+      description: 'Export when ready and paste the HTML into Drupal per your workflow.',
     },
   ],
 };

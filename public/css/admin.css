@@ -337,6 +337,10 @@ button[type="submit"]:hover { background: var(--un-blue-dark); }
 }
 
 .stat-label { color: var(--color-muted); font-size: 1rem; }
+.stat-card:not(:has(.stat-num)) .stat-label {
+    font-weight: 600;
+    color: var(--color-text);
+}
 .stat-card a { margin-top: 0.3rem; font-size: 1rem; }
 
 
@@ -732,4 +736,94 @@ textarea.wide {
 .quill-wrap .ql-container {
     border-bottom-left-radius: var(--radius);
     border-bottom-right-radius: var(--radius);
+}
+
+textarea.code-embed {
+    font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Two-column edit layout (aligned with un-peace-dictionary term editor) */
+.term-edit-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: start;
+}
+@media (max-width: 960px) {
+    .term-edit-layout { grid-template-columns: 1fr; }
+}
+.term-edit-form-col .form-row { margin-bottom: 1.25rem; }
+.term-edit-preview-col {
+    position: sticky;
+    top: 68px;
+    max-height: calc(100vh - 84px);
+    overflow: auto;
+}
+.term-edit-preview-col h3 {
+    font-family: var(--font-heading);
+    margin-top: 0;
+}
+.md-guide {
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.md-guide h3 {
+    font-size: 1.1875rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+}
+.md-guide h3:not(:first-child) {
+    margin-top: 1rem;
+}
+.md-guide p,
+.md-guide ol {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    color: var(--color-text);
+}
+.md-guide ol {
+    padding-left: 1.25rem;
+}
+.md-guide li { margin-bottom: 0.35rem; }
+.md-guide code {
+    font-size: 0.95em;
+    background: var(--color-surface);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+}
+
+.block-type-guide {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+    margin: 0;
+}
+.block-type-guide th,
+.block-type-guide td {
+    border: 1px solid var(--color-border);
+    padding: 0.45rem 0.6rem;
+    text-align: left;
+    vertical-align: top;
+}
+.block-type-guide th {
+    background: var(--color-surface);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+.block-type-guide td:first-child {
+    font-weight: 500;
+    max-width: 42%;
+}
+.block-type-guide td:last-child {
+    color: var(--color-muted);
+    font-weight: 400;
 }

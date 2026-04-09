@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Remove legacy sample story/timeline and import the Youth feature + timeline
- * from scripts/youth-content.js. Safe to run multiple times (idempotent for Youth title).
+ * Remove legacy sample rows and import the photo essay template story + sample timeline
+ * from scripts/youth-content.js. Safe to run multiple times (matches story/timeline titles).
  *
  * Usage: node scripts/import-youth.js
  */
@@ -19,7 +19,9 @@ async function importYouth() {
   await sequelize.sync({ alter: true });
 
   await FeatureStory.destroy({ where: { title: 'Sample Photo Essay' } });
+  await FeatureStory.destroy({ where: { title: 'Youth Have Always Moved History' } });
   await Timeline.destroy({ where: { title: 'Sample Timeline' } });
+  await Timeline.destroy({ where: { title: 'Youth Have Always Moved History' } });
 
   const [story] = await FeatureStory.findOrCreate({
     where: { title: youth.featureStory.title },
@@ -41,7 +43,7 @@ async function importYouth() {
     await TimelineEvent.create({ ...e, timelineId: timeline.id });
   }
 
-  console.log('Youth feature story and timeline imported.');
+  console.log('Photo essay template story and sample timeline imported.');
   process.exit(0);
 }
 

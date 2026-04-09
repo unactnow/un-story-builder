@@ -5,7 +5,7 @@ const {
   TimelineRevision,
 } = require('../models');
 const { ensureAuthenticated } = require('../middleware/auth');
-const { generateTimelineHTML } = require('../helpers/exportTimeline');
+const { generateTimelineHTML, escapeHtml } = require('../helpers/exportTimeline');
 const { sanitizeRichText } = require('../helpers/sanitizeRichText');
 
 const router = express.Router();
@@ -70,6 +70,35 @@ async function buildSnapshot(timeline) {
       };
     }),
   });
+}
+
+/** Persists timeline + events from req.body (same as POST /edit). Returns { timeline } or { error }. */
+async function saveTimelineDocument(req, timelineId) {
+  const timeline = await Timeline.findByPk(timelineId);
+  if (!timeline) {
+    return { error: 'not_found' };
+  }
+  const snap = await buildSnapshot(timeline);
+  await TimelineRevision.create({
+    timelineId: timeline.id,
+    snapshot: snap,
+    revisedBy: req.user.username || '',
+  });
+
+  const title = (req.body.title || '').trim();
+  if (!title) {
+    return { error: 'title_required' };
+  }
+  const description = sanitizeRichText(req.body.description != null ? String(req.body.description) : '');
+  await timeline.update({ title, description });
+
+  await TimelineEvent.destroy({ where: { timelineId: timeline.id } });
+  const eventData = parseEvents(req.body);
+  for (let i = 0; i < eventData.length; i += 1) {
+    const e = eventData[i];
+    await TimelineEvent.create({ ...e, timelineId: timeline.id, sortOrder: i });
+  }
+  return { timeline };
 }
 
 router.get('/', ensureAuthenticated, async (req, res) => {
@@ -137,39 +166,41 @@ router.get('/:id/edit', ensureAuthenticated, async (req, res) => {
 
 router.post('/:id/edit', ensureAuthenticated, async (req, res) => {
   try {
-    const timeline = await Timeline.findByPk(req.params.id);
-    if (!timeline) {
+    const result = await saveTimelineDocument(req, req.params.id);
+    if (result.error === 'not_found') {
       req.flash('error_msg', 'Timeline not found.');
       return res.redirect('/admin/timelines');
     }
-    const snap = await buildSnapshot(timeline);
-    await TimelineRevision.create({
-      timelineId: timeline.id,
-      snapshot: snap,
-      revisedBy: req.user.username || '',
-    });
-
-    const title = (req.body.title || '').trim();
-    if (!title) {
+    if (result.error === 'title_required') {
       req.flash('error_msg', 'Title is required.');
-      return res.redirect(`/admin/timelines/${timeline.id}/edit`);
-    }
-    const description = sanitizeRichText(req.body.description != null ? String(req.body.description) : '');
-    await timeline.update({ title, description });
-
-    await TimelineEvent.destroy({ where: { timelineId: timeline.id } });
-    const eventData = parseEvents(req.body);
-    for (let i = 0; i < eventData.length; i += 1) {
-      const e = eventData[i];
-      await TimelineEvent.create({ ...e, timelineId: timeline.id, sortOrder: i });
+      return res.redirect(`/admin/timelines/${req.params.id}/edit`);
     }
 
     req.flash('success_msg', 'Timeline saved.');
-    return res.redirect(`/admin/timelines/${timeline.id}/edit`);
+    return res.redirect(`/admin/timelines/${result.timeline.id}/edit`);
   } catch (err) {
     console.error(err);
     req.flash('error_msg', 'Failed to save timeline.');
     return res.redirect(`/admin/timelines/${req.params.id}/edit`);
+  }
+});
+
+router.post('/:id/preview-save', ensureAuthenticated, async (req, res) => {
+  try {
+    const result = await saveTimelineDocument(req, req.params.id);
+    if (result.error === 'not_found') {
+      return res.status(404).json({ ok: false, error: 'not_found' });
+    }
+    if (result.error === 'title_required') {
+      return res.status(400).json({ ok: false, error: 'title_required' });
+    }
+    return res.json({
+      ok: true,
+      previewUrl: `/admin/timelines/${result.timeline.id}/preview`,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ ok: false, error: 'server' });
   }
 });
 
@@ -182,6 +213,80 @@ router.post('/:id/delete', ensureAuthenticated, async (req, res) => {
     req.flash('error_msg', 'Failed to delete timeline.');
   }
   res.redirect('/admin/timelines');
+});
+
+router.get('/:id/preview', ensureAuthenticated, async (req, res) => {
+  const timeline = await Timeline.findByPk(req.params.id);
+  if (!timeline) {
+    return res.status(404).send('Timeline not found');
+  }
+  const events = await TimelineEvent.findAll({
+    where: { timelineId: timeline.id },
+    order: [['sortOrder', 'ASC']],
+  });
+  const htmlOutput = generateTimelineHTML(timeline, events, { req });
+  const titleSafe = escapeHtml(timeline.title || 'Timeline');
+  const editUrl = `/admin/timelines/${timeline.id}/edit`;
+  const doc = `<!DOCTYPE html>
+<html lang="en" class="fs-preview-standalone">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Preview — ${titleSafe}</title>
+<style>
+.fs-preview-edit-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100000;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.25rem;
+  min-height: 48px;
+  padding: 0.5rem 1rem;
+  background: #009edb;
+  font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+.fs-preview-edit-bar a {
+  color: #fff;
+  font-weight: 500;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.fs-preview-edit-bar a:hover {
+  text-decoration: underline;
+}
+.fs-preview-edit-bar-note {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.35;
+  color: rgba(255,255,255,0.88);
+  max-width: 36rem;
+  margin: 0;
+}
+html.fs-preview-standalone body {
+  padding-top: 4.5rem;
+}
+</style>
+</head>
+<body>
+<nav class="fs-preview-edit-bar" aria-label="Preview">
+  <a href="${editUrl}">← Back to edit</a>
+  <span class="fs-preview-edit-bar-note"><strong>Note:</strong> Preview text-sizing and fonts may not display accurately.</span>
+</nav>
+${htmlOutput}
+</body>
+</html>`;
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.set('Content-Disposition', 'inline');
+  res.send(doc);
 });
 
 router.get('/:id/export', ensureAuthenticated, async (req, res) => {

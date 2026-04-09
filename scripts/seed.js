@@ -53,7 +53,7 @@ async function seed() {
     for (const b of youth.storyBlocks) {
       await StoryBlock.create({ ...b, storyId: story.id });
     }
-    console.log('Feature story seeded (Youth Have Always Moved History).');
+    console.log('Feature story seeded (photo essay template).');
   }
 
   const timelineCount = await Timeline.count();
@@ -62,7 +62,7 @@ async function seed() {
     for (const e of youth.timelineEvents) {
       await TimelineEvent.create({ ...e, timelineId: timeline.id });
     }
-    console.log('Timeline seeded (Youth Have Always Moved History).');
+    console.log('Timeline seeded (sample).');
   }
 
   process.exit(0);

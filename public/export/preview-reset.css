@@ -1,0 +1,37 @@
+/*
+ * Browser default reset for feature story + timeline HTML when viewed outside Drupal
+ * (admin preview, raw downloaded file). Loaded before base + merged styles.
+ * Scoped to .fs-essay / .tl-block so rules do not touch the host CMS outside those roots.
+ * html/body rules use .fs-preview-standalone (admin preview wrapper only).
+ */
+
+html.fs-preview-standalone,
+html.fs-preview-standalone body {
+  margin: 0;
+}
+
+.fs-essay figure,
+.fs-essay picture {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.fs-essay .fs-split-image {
+  margin: 0;
+}
+
+.fs-essay blockquote {
+  margin: 0;
+}
+
+.tl-block figure,
+.tl-block picture {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.tl-block blockquote {
+  margin: 0;
+}
