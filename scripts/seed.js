@@ -9,6 +9,7 @@ require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const {
   sequelize,
+  authSequelize,
   User,
   Setting,
   FeatureStory,
@@ -19,7 +20,14 @@ const {
 const youth = require('./youth-content');
 
 async function seed() {
-  await sequelize.sync({ alter: true });
+  if (authSequelize === sequelize) {
+    await sequelize.sync({ alter: true });
+  } else {
+    await Promise.all([
+      sequelize.sync({ alter: true }),
+      authSequelize.sync({ alter: true }),
+    ]);
+  }
 
   const existing = await User.findOne({ where: { role: 'admin' } });
   if (existing) {

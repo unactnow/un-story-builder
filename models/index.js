@@ -1,7 +1,8 @@
 const sequelize = require('../config/database');
+const authSequelize = require('../config/auth-database');
 const { DataTypes } = require('sequelize');
 
-const User = sequelize.define('User', {
+const User = authSequelize.define('User', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -27,7 +28,7 @@ const User = sequelize.define('User', {
     allowNull: false,
   },
   role: {
-    type: DataTypes.ENUM('user', 'admin'),
+    type: DataTypes.ENUM('user', 'editor', 'admin'),
     defaultValue: 'user',
   },
 }, {
@@ -35,7 +36,7 @@ const User = sequelize.define('User', {
   timestamps: true,
 });
 
-const PasswordResetToken = sequelize.define('PasswordResetToken', {
+const PasswordResetToken = authSequelize.define('PasswordResetToken', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -167,6 +168,7 @@ TimelineRevision.belongsTo(Timeline, { foreignKey: 'timelineId' });
 
 module.exports = {
   sequelize,
+  authSequelize,
   User,
   PasswordResetToken,
   Setting,
