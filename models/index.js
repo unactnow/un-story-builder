@@ -104,6 +104,8 @@ const StoryBlock = sequelize.define('StoryBlock', {
       'quote_dark',
       'quote_light',
       'code_block',
+      'timeline_embed',
+      'youtube_embed',
       'divider'
     ),
     allowNull: false,

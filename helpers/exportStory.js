@@ -2,6 +2,8 @@ const { exportAssetUrl, mergedAssetUrlForPreview, basePeaceAndSecurityStylesheet
 const { htmlCommentSafe } = require('./htmlComment');
 const { stripEmbeddedExportAssets } = require('./stripEmbedAssets');
 const { sanitizeRichText, isStoredRichHtml } = require('./sanitizeRichText');
+const { generateTimelineHTML } = require('./exportTimeline');
+const { Timeline, TimelineEvent } = require('../models');
 
 /** Matches admin block type labels (views/admin/story-edit.ejs). */
 const BLOCK_TYPE_LABELS = {
@@ -18,7 +20,8 @@ const BLOCK_TYPE_LABELS = {
   text_body: 'Text block (body only)',
   quote_dark: 'Quote (dark / blue)',
   quote_light: 'Quote (light / white)',
-  code_block: 'Code (HTML embed)',
+  timeline_embed: 'Timeline embed',
+  youtube_embed: 'YouTube video',
   divider: 'Divider',
 };
 
@@ -94,7 +97,13 @@ function quoteBodyHtml(raw) {
   return `\t\t<p>${escapeHtml(raw)}</p>`;
 }
 
-function renderBlock(block, index) {
+function extractYouTubeId(url) {
+  if (!url || typeof url !== 'string') return null;
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]+)/);
+  return m ? m[1] : null;
+}
+
+async function renderBlock(block, index, options) {
   const b = block.get ? block.get({ plain: true }) : block;
   const type = b.blockType;
   const heading = escapeHtml(b.heading || '');
@@ -282,8 +291,25 @@ ${qInner}
 </div>`;
   }
 
-  if (type === 'code_block') {
-    return stripEmbeddedExportAssets(b.bodyText || '');
+  if (type === 'timeline_embed') {
+    const timelineId = (b.bodyText || '').trim();
+    if (!timelineId) return '';
+    const tl = await Timeline.findByPk(timelineId);
+    if (!tl) return `<!-- timeline ${escapeHtml(timelineId)} not found -->`;
+    const events = await TimelineEvent.findAll({
+      where: { timelineId },
+      order: [['sortOrder', 'ASC']],
+    });
+    const raw = generateTimelineHTML(tl, events, options);
+    return stripEmbeddedExportAssets(raw);
+  }
+
+  if (type === 'youtube_embed') {
+    const videoId = extractYouTubeId(vidSrc);
+    if (!videoId) return '';
+    return `<div class="fs-youtube-embed">
+\t<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe>
+</div>`;
   }
 
   if (type === 'divider') {
@@ -298,7 +324,7 @@ ${qInner}
 /**
  * @param {{ req?: import('express').Request }} [options] - pass `{ req }` for admin preview (includes browser reset CSS; export omits it)
  */
-function generateStoryHTML(story, blocks, options = {}) {
+async function generateStoryHTML(story, blocks, options = {}) {
   const assetUrl = options.req
     ? (rel) => mergedAssetUrlForPreview(options.req, rel)
     : exportAssetUrl;
@@ -331,14 +357,16 @@ function generateStoryHTML(story, blocks, options = {}) {
     return s && s.title ? String(s.title) : '';
   })();
 
-  const inner = sorted
-    .map((block, i) => {
-      const b = block.get ? block.get({ plain: true }) : block;
-      const blockType = b.blockType || '';
-      const comment = `<!-- ${htmlCommentSafe(`${storyTitlePlain || 'Untitled'} | ${blockTypeLabel(blockType)}`)} -->`;
-      return [comment, renderBlock(block, i)].join('\n');
-    })
-    .join('\n\n');
+  const innerParts = [];
+  for (let i = 0; i < sorted.length; i += 1) {
+    const block = sorted[i];
+    const b = block.get ? block.get({ plain: true }) : block;
+    const blockType = b.blockType || '';
+    const comment = `<!-- ${htmlCommentSafe(`${storyTitlePlain || 'Untitled'} | ${blockTypeLabel(blockType)}`)} -->`;
+    const html = await renderBlock(block, i, options);
+    innerParts.push([comment, html].join('\n'));
+  }
+  const inner = innerParts.join('\n\n');
 
   const essayOpen = '<div class="fs-essay" id="fs-essay" role="article" aria-label="Feature story">';
   const essayClose = '</div>';

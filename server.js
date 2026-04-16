@@ -121,7 +121,17 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-function syncDatabases() {
+async function migrateEnums() {
+  const enumName = 'enum_story_blocks_blockType';
+  for (const val of ['timeline_embed', 'youtube_embed']) {
+    await sequelize.query(
+      `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = '${val}' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = '${enumName}')) THEN ALTER TYPE "${enumName}" ADD VALUE '${val}'; END IF; END $$;`
+    ).catch(() => {});
+  }
+}
+
+async function syncDatabases() {
+  await migrateEnums();
   if (authSequelize === sequelize) {
     return sequelize.sync({ alter: true });
   }

@@ -3,6 +3,7 @@ const {
   FeatureStory,
   StoryBlock,
   StoryRevision,
+  Timeline,
 } = require('../models');
 const { ensureAuthenticated } = require('../middleware/auth');
 const { generateStoryHTML, escapeHtml } = require('../helpers/exportStory');
@@ -20,11 +21,25 @@ function slugify(text) {
     .replace(/^-|-$/g, '');
 }
 
+const YOUTUBE_URL_RE = /^https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)[\w-]+/;
+
 function blockFieldsFromBody(entry) {
   if (!entry || typeof entry !== 'object') return null;
   const blockType = entry.blockType;
   const rawBody = entry.bodyText != null ? String(entry.bodyText) : '';
-  const bodyText = blockType === 'code_block' ? rawBody : sanitizeRichText(rawBody);
+
+  let bodyText;
+  if (blockType === 'timeline_embed') {
+    bodyText = rawBody.trim();
+  } else {
+    bodyText = sanitizeRichText(rawBody);
+  }
+
+  let videoUrl = entry.videoUrl != null ? String(entry.videoUrl) : '';
+  if (blockType === 'youtube_embed') {
+    videoUrl = YOUTUBE_URL_RE.test(videoUrl.trim()) ? videoUrl.trim() : '';
+  }
+
   return {
     blockType,
     sortOrder: parseInt(entry.sortOrder, 10) || 0,
@@ -37,7 +52,7 @@ function blockFieldsFromBody(entry) {
     imageUrl: entry.imageUrl != null ? String(entry.imageUrl) : '',
     imageAlt: entry.imageAlt != null ? String(entry.imageAlt) : '',
     imageCaption: entry.imageCaption != null ? String(entry.imageCaption) : '',
-    videoUrl: entry.videoUrl != null ? String(entry.videoUrl) : '',
+    videoUrl,
   };
 }
 
@@ -120,12 +135,14 @@ router.get('/', ensureAuthenticated, async (req, res) => {
   res.render('admin/stories', { title: 'Feature stories', stories });
 });
 
-router.get('/new', ensureAuthenticated, (req, res) => {
+router.get('/new', ensureAuthenticated, async (req, res) => {
+  const timelines = await Timeline.findAll({ order: [['title', 'ASC']] });
   res.render('admin/story-edit', {
     title: 'New story',
     story: null,
     blocks: [],
     revisionCount: 0,
+    timelines,
   });
 });
 
@@ -162,11 +179,13 @@ router.get('/:id/edit', ensureAuthenticated, async (req, res) => {
     order: [['sortOrder', 'ASC']],
   });
   const revisionCount = await StoryRevision.count({ where: { storyId: story.id } });
+  const timelines = await Timeline.findAll({ order: [['title', 'ASC']] });
   res.render('admin/story-edit', {
     title: 'Edit story',
     story,
     blocks,
     revisionCount,
+    timelines,
   });
 });
 
@@ -230,7 +249,7 @@ router.get('/:id/preview', ensureAuthenticated, async (req, res) => {
     where: { storyId: story.id },
     order: [['sortOrder', 'ASC']],
   });
-  const htmlOutput = generateStoryHTML(story, blocks, { req });
+  const htmlOutput = await generateStoryHTML(story, blocks, { req });
   const titleSafe = escapeHtml(story.title || 'Story');
   const editUrl = `/admin/stories/${story.id}/edit`;
   const doc = `<!DOCTYPE html>
@@ -305,7 +324,7 @@ router.get('/:id/export', ensureAuthenticated, async (req, res) => {
     where: { storyId: story.id },
     order: [['sortOrder', 'ASC']],
   });
-  const htmlOutput = generateStoryHTML(story, blocks);
+  const htmlOutput = await generateStoryHTML(story, blocks);
   res.render('admin/story-export', {
     title: 'Export story',
     story,
@@ -323,7 +342,7 @@ router.get('/:id/export/download', ensureAuthenticated, async (req, res) => {
     where: { storyId: story.id },
     order: [['sortOrder', 'ASC']],
   });
-  const htmlOutput = generateStoryHTML(story, blocks);
+  const htmlOutput = await generateStoryHTML(story, blocks);
   res.set('Content-Type', 'text/html');
   const base = slugify(story.title || 'story') || 'story';
   res.set('Content-Disposition', `attachment; filename="${base}.html"`);
@@ -377,7 +396,7 @@ router.post('/:id/revisions/:revId/restore', ensureAuthenticated, async (req, re
           sortOrder: b.sortOrder != null ? b.sortOrder : i,
           heading: b.heading || '',
           subheading: b.subheading || '',
-          bodyText: sanitizeRichText(b.bodyText || ''),
+          bodyText: b.blockType === 'timeline_embed' ? (b.bodyText || '').trim() : sanitizeRichText(b.bodyText || ''),
           quoteText: sanitizeRichText(b.quoteText || ''),
           quoteSpeaker: b.quoteSpeaker || '',
           quoteSpeakerTitle: b.quoteSpeakerTitle || '',
